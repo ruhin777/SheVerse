@@ -1,0 +1,14 @@
+# Node modules
+backend/node_modules/
+frontend/node_modules/
+
+# Env files
+backend/.env
+frontend/.env
+
+# Build folders (React frontend)
+frontend/build/
+frontend/dist/
+
+# Logs
+*.log
