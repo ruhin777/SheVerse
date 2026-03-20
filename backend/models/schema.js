@@ -63,7 +63,9 @@ const EmergencyService = mongoose.model("EmergencyService", emergencyServiceSche
 const periodCycleSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  cycleLength:  { type: Number, default: 28 },   // 
+  periodLength: { type: Number, default: 5 }     // 
 });
 const PeriodCycle = mongoose.model("PeriodCycle", periodCycleSchema);
 
