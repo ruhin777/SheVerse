@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
+const path = require("path"); // ✅ ADDED
 
 const placeRoutes       = require("./routes/placeRoutes");
 const tripRoutes        = require("./routes/tripRoutes");
@@ -11,10 +12,15 @@ const hotelRoutes       = require("./routes/hotelRoutes");
 const marketplaceRoutes = require("./routes/marketplaceRoutes"); 
 const trustedContactRoutes = require("./routes/trustedContactRoutes"); // ADD
 
+const postRoutes        = require("./routes/postRoutes");       // ADD for posts
+
 const app = express();
 
 app.use(cors({ origin: "http://localhost:3000" }));
 app.use(express.json());
+
+// ✅ ADDED: Serve uploaded images
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
@@ -27,6 +33,8 @@ app.use("/api/guides",      guideRoutes);
 app.use("/api/hotels",      hotelRoutes);
 app.use("/api/marketplace", marketplaceRoutes); 
 app.use("/api/contacts", trustedContactRoutes);// ADD
+
+app.use("/api/posts",       postRoutes);       // ADD for posts
 
 app.get("/", (req, res) => res.send("SheVerse API running"));
 

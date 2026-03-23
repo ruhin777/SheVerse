@@ -17,10 +17,10 @@ import TrustedContactsPage from "./pages/TrustedContactsPage";
 // import ArticlesPage from "./pages/health/ArticlesPage";
 // import ExercisePage from "./pages/health/ExercisePage";
 // import AIChatPage from "./pages/health/AIChatPage";
- import GuidePage from "./pages/GuidePage";
- import HotelPage from "./pages/HotelPage";
- import MarketplacePage from "./pages/MarketplacePage";
-// import FeedPage from "./pages/social/FeedPage";
+import GuidePage from "./pages/GuidePage";
+import HotelPage from "./pages/HotelPage";
+import MarketplacePage from "./pages/MarketplacePage";
+import PostPage from "./pages/PostPage"; // ── ADDED for Social Feed
 // import GroupsPage from "./pages/social/GroupsPage";
 // import ProfilePage from "./pages/social/ProfilePage";
 // import ChatPage from "./pages/social/ChatPage";
@@ -188,7 +188,7 @@ function App() {
           <Route path="/health/ai-bot"      element={<ComingSoon title="AI Health Bot" />} />
 
           {/* Social — TODO */}
-          <Route path="/social/feed"        element={<ComingSoon title="Community Feed" />} />
+          <Route path="/social/feed"        element={<PostPage />} /> {/* ── UPDATED to use PostPage */}
           <Route path="/social/groups"      element={<ComingSoon title="Interest Groups" />} />
           <Route path="/social/profile"     element={<ComingSoon title="My Profile" />} />
           <Route path="/social/chat"        element={<ComingSoon title="Messages" />} />

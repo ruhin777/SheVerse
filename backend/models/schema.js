@@ -289,6 +289,7 @@ const Review = mongoose.model("Review", reviewSchema);
 // ================= SOCIAL FEED =================
 const postSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  username: String,
   content: String,
   image: String,
   isAnonymous: Boolean,
@@ -306,6 +307,7 @@ const Reaction = mongoose.model("Reaction", reactionSchema);
 
 const commentSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  username: String,
   postId: { type: mongoose.Schema.Types.ObjectId, ref: "Post" },
   groupPostId: { type: mongoose.Schema.Types.ObjectId, ref: "GroupPost" },
   text: String,
