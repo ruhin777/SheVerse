@@ -8,7 +8,8 @@ const tripRoutes        = require("./routes/tripRoutes");
 const authRoutes        = require("./routes/authRoutes");
 const guideRoutes       = require("./routes/guideRoutes");
 const hotelRoutes       = require("./routes/hotelRoutes");
-const marketplaceRoutes = require("./routes/marketplaceRoutes"); // ADD
+const marketplaceRoutes = require("./routes/marketplaceRoutes"); 
+const trustedContactRoutes = require("./routes/trustedContactRoutes"); // ADD
 
 const app = express();
 
@@ -24,7 +25,8 @@ app.use("/api/trips",       tripRoutes);
 app.use("/api/auth",        authRoutes);
 app.use("/api/guides",      guideRoutes);
 app.use("/api/hotels",      hotelRoutes);
-app.use("/api/marketplace", marketplaceRoutes); // ADD
+app.use("/api/marketplace", marketplaceRoutes); 
+app.use("/api/contacts", trustedContactRoutes);// ADD
 
 app.get("/", (req, res) => res.send("SheVerse API running"));
 

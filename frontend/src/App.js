@@ -7,6 +7,7 @@ import TripPage from "./pages/TripPage";
 import AuthPage from "./pages/AuthPage";
 
 // ── TODO: Team members import their pages here ──
+import TrustedContactsPage from "./pages/TrustedContactsPage";
 // import SOSPage from "./pages/safety/SOSPage";
 // import LiveLocationPage from "./pages/safety/LiveLocationPage";
 // import IncidentReportPage from "./pages/safety/IncidentReportPage";
@@ -33,6 +34,7 @@ const NAV = [
       { label: "Live Location",       path: "/safety/location" },
       { label: "Emergency Services",  path: "/safety/emergency" },
       { label: "Report Incident",     path: "/safety/report" },
+      { label: "Trusted Contacts", path: "/safety/contacts" },
     ]
   },
   {
@@ -172,6 +174,7 @@ function App() {
           <Route path="/travel/marketplace" element={<MarketplacePage />} />
 
           {/* Safety — TODO */}
+          <Route path="/safety/contacts"    element={<TrustedContactsPage />} />
           <Route path="/safety/sos"         element={<ComingSoon title="SOS Alert" />} />
           <Route path="/safety/location"    element={<ComingSoon title="Live Location Sharing" />} />
           <Route path="/safety/emergency"   element={<ComingSoon title="Emergency Services" />} />
