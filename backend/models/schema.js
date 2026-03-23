@@ -99,7 +99,9 @@ const exerciseSchema = new mongoose.Schema({
   category: String,
   difficulty: String,
   duration: String,
-  instructions: String
+  instructions: String,
+  image: String,
+  gif: String,
 });
 const Exercise = mongoose.model("Exercise", exerciseSchema);
 
@@ -113,11 +115,15 @@ const ExerciseLog = mongoose.model("ExerciseLog", exerciseLogSchema);
 
 // ================= HEALTH ARTICLES =================
 const articleSchema = new mongoose.Schema({
-  authorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  title: String,
-  category: String,
-  content: String,
-  rating: Number
+  authorId:   { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  authorName: { type: String, default: "Anonymous" },
+  title:      { type: String, required: true },
+  category:   { type: String, default: "General" },
+  content:    { type: String, required: true },
+  image:      { type: String, default: "" },
+  likes:      [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  ratings:    [{ userId: mongoose.Schema.Types.ObjectId, rating: Number }],
+  createdAt:  { type: Date, default: Date.now },
 });
 const Article = mongoose.model("Article", articleSchema);
 
@@ -140,16 +146,29 @@ const ChatBotQuery = mongoose.model("ChatBotQuery", chatBotQuerySchema);
 const placeSchema = new mongoose.Schema({
   name: String,
   category: String,
+  city: String,
   location: String,
+  image: String,
   description: String,
-  rating: Number
+  rating: { type: Number, default: 0 },
+  tags: [String],
+  coordinates: {lat: Number,
+    lng: Number,
+  },
 });
 const Place = mongoose.model("Place", placeSchema);
 
 const restaurantSchema = new mongoose.Schema({
   name: String,
+  city: String,
   location: String,
+  cuisine: String,
+  image: String,
   rating: Number,
+  priceRange: String,
+  coordinates: {lat: Number,
+    lng: Number,
+  },
   placeId: { type: mongoose.Schema.Types.ObjectId, ref: "Place" }
 });
 const Restaurant = mongoose.model("Restaurant", restaurantSchema);
@@ -168,7 +187,9 @@ const guideSchema = new mongoose.Schema({
   rating: Number,
   verified: Boolean,
   pricePerDay: Number,
-  contact: String
+  contact: String,
+  image: String,
+  bio: String
 });
 const Guide = mongoose.model("Guide", guideSchema);
 
@@ -185,7 +206,10 @@ const hotelSchema = new mongoose.Schema({
   location: String,
   pricePerNight: Number,
   rating: Number,
-  safetyVerified: Boolean
+  safetyVerified: Boolean,
+  image: String,
+  amenities: [String],
+  description: String
 });
 const Hotel = mongoose.model("Hotel", hotelSchema);
 
@@ -263,7 +287,10 @@ const reviewSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   rating: Number,
   comment: String,
-  date: { type: Date, default: Date.now }
+  date: { type: Date, default: Date.now },
+  placeId: { type: mongoose.Schema.Types.ObjectId, ref: "Place", default: null },
+  hotelId: { type: mongoose.Schema.Types.ObjectId, ref: "Hotel", default: null },
+  guideId: { type: mongoose.Schema.Types.ObjectId, ref: "Guide", default: null }
 });
 const Review = mongoose.model("Review", reviewSchema);
 

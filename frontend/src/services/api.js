@@ -39,3 +39,7 @@ export const logTodayPeriod = (userId, startDate, endDate, cycleLength, periodLe
 // Get ALL period history for calendar
 export const getAllPeriods = (userId) =>
   API.get(`/api/period/all/${userId}`);
+
+// Undo last period log
+export const undoLastPeriod = (userId) =>
+  API.delete(`/api/period/undo/${userId}`);
