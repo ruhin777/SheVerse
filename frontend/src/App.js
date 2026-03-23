@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
+import './App.css';
 import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
 
 // ── Existing Pages (Travel Module) ──
 import PlacesPage from "./pages/PlacesPage";
@@ -12,11 +13,11 @@ import TrustedContactsPage from "./pages/TrustedContactsPage";
 // import LiveLocationPage from "./pages/safety/LiveLocationPage";
 // import IncidentReportPage from "./pages/safety/IncidentReportPage";
 // import EmergencyServicesPage from "./pages/safety/EmergencyServicesPage";
-// import MenstrualTrackerPage from "./pages/health/MenstrualTrackerPage";
-// import LifestylePage from "./pages/health/LifestylePage";
-// import ArticlesPage from "./pages/health/ArticlesPage";
-// import ExercisePage from "./pages/health/ExercisePage";
-// import AIChatPage from "./pages/health/AIChatPage";
+ import MenstrualTracker from './pages/MenstrualTracker';
+ import LifestylePage from "./pages/LifestylePage";
+ import ArticlesPage from "./pages/ArticlesPage";
+ import ExercisePage from "./pages/ExercisePage";
+ import AIBotPage from "./pages/AIBotPage";
  import GuidePage from "./pages/GuidePage";
  import HotelPage from "./pages/HotelPage";
  import MarketplacePage from "./pages/MarketplacePage";
@@ -81,6 +82,7 @@ function ComingSoon({ title }) {
     </div>
   );
 }
+
 
 const P = {
   wrap:  { minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" },
@@ -181,11 +183,11 @@ function App() {
           <Route path="/safety/report"      element={<ComingSoon title="Incident Reporting" />} />
 
           {/* Health — TODO */}
-          <Route path="/health/menstrual"   element={<ComingSoon title="Menstrual Tracker" />} />
-          <Route path="/health/lifestyle"   element={<ComingSoon title="Lifestyle & BMI" />} />
-          <Route path="/health/articles"    element={<ComingSoon title="Health Articles" />} />
-          <Route path="/health/exercise"    element={<ComingSoon title="Exercise Guidance" />} />
-          <Route path="/health/ai-bot"      element={<ComingSoon title="AI Health Bot" />} />
+          <Route path="/health/menstrual" element={<MenstrualTracker />} />
+          <Route path="/health/lifestyle" element={<LifestylePage />} />
+          <Route path="/health/articles" element={<ArticlesPage />} />
+          <Route path="/health/exercise" element={<ExercisePage />} />
+          <Route path="/health/ai-bot"   element={<AIBotPage/>} />
 
           {/* Social — TODO */}
           <Route path="/social/feed"        element={<ComingSoon title="Community Feed" />} />

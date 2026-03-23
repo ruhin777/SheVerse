@@ -63,7 +63,9 @@ const EmergencyService = mongoose.model("EmergencyService", emergencyServiceSche
 const periodCycleSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  cycleLength:  { type: Number, default: 28 },   // 
+  periodLength: { type: Number, default: 5 }     // 
 });
 const PeriodCycle = mongoose.model("PeriodCycle", periodCycleSchema);
 
@@ -97,7 +99,9 @@ const exerciseSchema = new mongoose.Schema({
   category: String,
   difficulty: String,
   duration: String,
-  instructions: String
+  instructions: String,
+  image: String,
+  gif: String,
 });
 const Exercise = mongoose.model("Exercise", exerciseSchema);
 
@@ -111,11 +115,15 @@ const ExerciseLog = mongoose.model("ExerciseLog", exerciseLogSchema);
 
 // ================= HEALTH ARTICLES =================
 const articleSchema = new mongoose.Schema({
-  authorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  title: String,
-  category: String,
-  content: String,
-  rating: Number
+  authorId:   { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  authorName: { type: String, default: "Anonymous" },
+  title:      { type: String, required: true },
+  category:   { type: String, default: "General" },
+  content:    { type: String, required: true },
+  image:      { type: String, default: "" },
+  likes:      [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  ratings:    [{ userId: mongoose.Schema.Types.ObjectId, rating: Number }],
+  createdAt:  { type: Date, default: Date.now },
 });
 const Article = mongoose.model("Article", articleSchema);
 
