@@ -11,7 +11,7 @@ const guideRoutes       = require("./routes/guideRoutes");
 const hotelRoutes       = require("./routes/hotelRoutes");
 const marketplaceRoutes = require("./routes/marketplaceRoutes"); 
 const trustedContactRoutes = require("./routes/trustedContactRoutes"); // ADD
-const marketplaceRoutes = require("./routes/marketplaceRoutes");
+
 const menstrualRoutes   = require("./routes/menstrualRoutes");
 const articleRoutes     = require("./routes/articleRoutes");
 const lifestyleRoutes   = require("./routes/lifestyleRoutes");
