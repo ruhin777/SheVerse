@@ -20,6 +20,7 @@ export default function AuthPage({ onLogin }) {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       onLogin(data.user);
+      window.location.reload();
     } catch (err) {
       setError(err.response?.data?.error || "Something went wrong.");
     } finally {
