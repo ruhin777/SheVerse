@@ -11,7 +11,7 @@ import AuthPage from "./pages/AuthPage";
 import TrustedContactsPage from "./pages/TrustedContactsPage";
 // import SOSPage from "./pages/safety/SOSPage";
 // import LiveLocationPage from "./pages/safety/LiveLocationPage";
-// import IncidentReportPage from "./pages/safety/IncidentReportPage";
+import IncidentReportPage from "./pages/IncidentReportPage";
 // import EmergencyServicesPage from "./pages/safety/EmergencyServicesPage";
  import MenstrualTracker from './pages/MenstrualTracker';
  import LifestylePage from "./pages/LifestylePage";
@@ -27,9 +27,6 @@ import TrustedContactsPage from "./pages/TrustedContactsPage";
 // import ArticlesPage from "./pages/health/ArticlesPage";
 // import ExercisePage from "./pages/health/ExercisePage";
 // import AIChatPage from "./pages/health/AIChatPage";
-import GuidePage from "./pages/GuidePage";
-import HotelPage from "./pages/HotelPage";
-import MarketplacePage from "./pages/MarketplacePage";
 import PostPage from "./pages/PostPage"; // ── ADDED for Social Feed
 // import GroupsPage from "./pages/social/GroupsPage";
 // import ProfilePage from "./pages/social/ProfilePage";
@@ -189,7 +186,7 @@ function App() {
           <Route path="/safety/sos"         element={<ComingSoon title="SOS Alert" />} />
           <Route path="/safety/location"    element={<ComingSoon title="Live Location Sharing" />} />
           <Route path="/safety/emergency"   element={<ComingSoon title="Emergency Services" />} />
-          <Route path="/safety/report"      element={<ComingSoon title="Incident Reporting" />} />
+          <Route path="/safety/report"      element={<IncidentReportPage />} />
 
           {/* Health — TODO */}
           <Route path="/health/menstrual" element={<MenstrualTracker />} />

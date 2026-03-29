@@ -11,7 +11,7 @@ const guideRoutes       = require("./routes/guideRoutes");
 const hotelRoutes       = require("./routes/hotelRoutes");
 const marketplaceRoutes = require("./routes/marketplaceRoutes"); 
 const trustedContactRoutes = require("./routes/trustedContactRoutes"); // ADD
-const marketplaceRoutes = require("./routes/marketplaceRoutes");
+
 const menstrualRoutes   = require("./routes/menstrualRoutes");
 const articleRoutes     = require("./routes/articleRoutes");
 const lifestyleRoutes   = require("./routes/lifestyleRoutes");
@@ -19,6 +19,8 @@ const exerciseRoutes    = require("./routes/exerciseRoutes");
 const aibotRoutes       = require("./routes/aibotRoutes");
 
 const postRoutes        = require("./routes/postRoutes");       // ADD for posts
+
+const incidentRoutes    = require("./routes/incidentRoutes");
 
 const app = express();
 
@@ -47,6 +49,7 @@ app.use("/api/articles",    articleRoutes);
 app.use("/api/lifestyle",   lifestyleRoutes);
 app.use("/api/exercises",   exerciseRoutes);
 app.use("/api/aibot",       aibotRoutes);
+app.use("/api/incidents", incidentRoutes);
 
 app.get("/", (req, res) => res.send("SheVerse API running ✅"));
 app.use("/api/posts",       postRoutes);       // ADD for posts

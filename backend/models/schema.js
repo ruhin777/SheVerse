@@ -45,7 +45,8 @@ const incidentReportSchema = new mongoose.Schema({
   description: String,
   location: String,
   dateTime: Date,
-  anonymous: Boolean
+  anonymous: Boolean,
+  incidentType: { type: String, default: "" }
 });
 const IncidentReport = mongoose.model("IncidentReport", incidentReportSchema);
 
