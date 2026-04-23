@@ -2,7 +2,30 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 
 const API = "http://localhost:5000/api/posts";
+const API_PROFILE = "http://localhost:5000/api/profile"; // ADDED: for fetching profile pics
 const emojis = ["❤️", "👍", "😂", "😮", "😢"];
+
+// ── Cloudinary config ──
+const CLOUDINARY_CLOUD_NAME = "dgtzgke3h"; // cloud name
+const CLOUDINARY_UPLOAD_PRESET = "sheverse_uploads"; //unsigned upload preset
+
+async function uploadToCloudinary(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+    { method: "POST", body: formData }
+  );
+  const data = await res.json();
+  return data.secure_url; // returns the public URL
+}
+
+// ── YouTube embed helper (same as GroupPage) ──
+const getYouTubeEmbed = (url) => {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^\s&]+)/);
+  return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+};
 
 export default function PostPage() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -12,6 +35,7 @@ export default function PostPage() {
   const [comments, setComments] = useState({});
   const [newComment, setNewComment] = useState({});
   const [newPost, setNewPost] = useState({ content: "", isAnonymous: false, image: null });
+  const [uploading, setUploading] = useState(false);
 
   const [editingPostId, setEditingPostId] = useState(null);
   const [editPostText, setEditPostText] = useState("");
@@ -19,18 +43,51 @@ export default function PostPage() {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editCommentText, setEditCommentText] = useState("");
 
-  // ✅ ONLY FIXED PART HERE
+  // ADDED: profile pics cache — maps userId -> photo url (or null)
+  const [userProfiles, setUserProfiles] = useState({});
+
+  // ADDED: fetch profile pic for a userId, cache it in userProfiles
+  const fetchUserProfile = async (userId) => {
+    if (!userId || userProfiles[userId] !== undefined) return;
+    try {
+      const { data } = await axios.get(`${API_PROFILE}/${userId}`);
+      setUserProfiles(prev => ({ ...prev, [userId]: data.photo || null }));
+    } catch {
+      setUserProfiles(prev => ({ ...prev, [userId]: null }));
+    }
+  };
+
+  // ADDED: helper to render avatar — profile pic if available, else first letter fallback
+  const renderAvatar = (userId, displayName) => {
+    const photo = userProfiles[userId];
+    if (photo) {
+      return (
+        <img
+          src={photo}
+          alt={displayName}
+          style={{ ...S.postAvatar, objectFit: "cover" }}
+        />
+      );
+    }
+    return (
+      <div style={S.postAvatar}>{(displayName || "U")[0].toUpperCase()}</div>
+    );
+  };
+
   const fetchPosts = async () => {
     const { data } = await axios.get(API);
-
     const normalized = data.map(p => ({
       ...p,
-      createdAt: p.createdAt || p.timestamp   // ✅ FIX: use real stored time
+      createdAt: p.createdAt || p.timestamp
     }));
-
     setPosts(normalized);
     normalized.forEach(p => fetchReactions(p._id));
     normalized.forEach(p => fetchComments(p._id));
+    // ADDED: fetch profile pics for all post authors
+    normalized.forEach(p => {
+      const uid = p.isAnonymous ? null : p.userId?.toString();
+      if (uid) fetchUserProfile(uid);
+    });
   };
 
   const fetchReactions = async (postId) => {
@@ -41,21 +98,38 @@ export default function PostPage() {
   const fetchComments = async (postId) => {
     const { data } = await axios.get(`${API}/comment/${postId}`);
     setComments(prev => ({ ...prev, [postId]: data }));
+    // ADDED: fetch profile pics for all commenters
+    data.forEach(c => fetchUserProfile(c.userId?.toString()));
   };
 
   const handlePost = async () => {
     if (!newPost.content.trim() && !newPost.image) return;
 
-    const formData = new FormData();
-    formData.append("userId", user._id);
-    formData.append("username", user?.name || "Unknown User");
-    formData.append("content", newPost.content);
-    formData.append("isAnonymous", newPost.isAnonymous);
-    if (newPost.image) formData.append("image", newPost.image);
+    setUploading(true);
+    try {
+      let imageUrl = null;
 
-    await axios.post(API, formData, { headers: { "Content-Type": "multipart/form-data" } });
-    setNewPost({ content: "", isAnonymous: false, image: null });
-    fetchPosts();
+      // ── Upload image to Cloudinary if attached ──
+      if (newPost.image) {
+        imageUrl = await uploadToCloudinary(newPost.image);
+      }
+
+      // ── Send JSON (not FormData) since image is now a URL ──
+      await axios.post(API, {
+        userId: user._id,
+        username: user?.name || "Unknown User",
+        content: newPost.content,
+        isAnonymous: newPost.isAnonymous,
+        image: imageUrl,  // Cloudinary URL or null
+      });
+
+      setNewPost({ content: "", isAnonymous: false, image: null });
+      fetchPosts();
+    } catch (err) {
+      alert("Failed to post. Please try again.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleReaction = async (postId, emoji) => {
@@ -64,9 +138,7 @@ export default function PostPage() {
   };
 
   const handleRemoveReaction = async (postId) => {
-    await axios.delete(`${API}/reaction`, {
-      data: { postId, userId: user._id }
-    });
+    await axios.delete(`${API}/reaction`, { data: { postId, userId: user._id } });
     fetchReactions(postId);
   };
 
@@ -107,7 +179,11 @@ export default function PostPage() {
     fetchComments(comment.postId);
   };
 
-  useEffect(() => { fetchPosts(); }, []);
+  useEffect(() => {
+    fetchPosts();
+    // ADDED: fetch current user's own profile pic
+    fetchUserProfile(user._id);
+  }, []);
 
   return (
     <div style={S.wrapper}>
@@ -116,7 +192,17 @@ export default function PostPage() {
 
       <div style={S.content}>
 
+        {/* ── Post Composer ── */}
         <div style={S.card}>
+          {/* Author row with avatar */}
+          <div style={S.composerAuthor}>
+            {/* CHANGED: show profile pic if available, else avatar fallback */}
+            {renderAvatar(newPost.isAnonymous ? null : user._id, newPost.isAnonymous ? "Anonymous User" : user.name)}
+            <span style={S.composerName}>
+              {newPost.isAnonymous ? "Anonymous User" : user.name}
+            </span>
+          </div>
+
           <textarea
             placeholder="What's on your mind?"
             value={newPost.content}
@@ -134,25 +220,53 @@ export default function PostPage() {
               Post anonymously
             </label>
 
-            <input type="file" onChange={e => setNewPost({ ...newPost, image: e.target.files[0] })} />
-            <button onClick={handlePost} style={S.btn}>Post</button>
+            <label style={S.fileLabel}>
+              📎 {newPost.image ? newPost.image.name : "Attach image"}
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={e => setNewPost({ ...newPost, image: e.target.files[0] })}
+              />
+            </label>
+
+            <button onClick={handlePost} style={S.btn} disabled={uploading}>
+              {uploading ? "Posting..." : "Post"}
+            </button>
           </div>
         </div>
 
+        {/* ── Posts Feed ── */}
         {posts.map(p => {
           const postReactions = reactions[p._id] || [];
           const postComments = comments[p._id] || [];
-
           const userReaction = postReactions.find(r => r.userId?.toString() === user._id)?.emoji;
           const countReactions = emojis.map(e => postReactions.filter(r => r.emoji === e).length);
 
+          const isAnon = p.isAnonymous === true || p.isAnonymous === "true";
+          const displayName = isAnon ? "Anonymous User" : (p.username || "Unknown User");
+          // ADDED: use userId for profile pic lookup (null if anonymous)
+          const postAuthorId = isAnon ? null : p.userId?.toString();
+
           return (
             <div key={p._id} style={S.card}>
+              {/* Post header with avatar */}
               <div style={S.postHeader}>
-                <strong>
-                  {p.isAnonymous ? "Anonymous User" : (p.username || "Unknown User")}
-                </strong>
-                <span style={S.timestamp}>{new Date(p.createdAt).toLocaleString()}</span>
+                <div style={S.postAuthorRow}>
+                  {/* CHANGED: show profile pic if available, else avatar fallback */}
+                  {renderAvatar(postAuthorId, displayName)}
+                  <div>
+                    <strong style={S.postAuthor}>{displayName}</strong>
+                    <div style={S.timestamp}>{new Date(p.createdAt).toLocaleString()}</div>
+                  </div>
+                </div>
+
+                {user._id === p.userId?.toString() && (
+                  <div style={S.actionRow}>
+                    <button onClick={() => { setEditingPostId(p._id); setEditPostText(p.content); }} style={S.commentBtn}>Edit</button>
+                    <button onClick={() => handleDeletePost(p._id)} style={S.commentBtn}>Delete</button>
+                  </div>
+                )}
               </div>
 
               {editingPostId === p._id ? (
@@ -165,43 +279,72 @@ export default function PostPage() {
                   <button onClick={() => handleSavePost(p._id)} style={S.commentBtn}>Save</button>
                 </>
               ) : (
-                <p style={S.postText}>{p.content}</p>
+                // ── Clickable links + YouTube embed (same as GroupPage) ──
+                <p style={S.postText}>
+                  {p.content.split(/(https?:\/\/[^\s]+)/g).map((part, i) => {
+                    const embed = getYouTubeEmbed(part);
+                    if (embed) {
+                      return (
+                        <iframe
+                          key={i}
+                          width="100%"
+                          height="220"
+                          src={embed}
+                          frameBorder="0"
+                          allowFullScreen
+                          style={{ borderRadius: 10, marginTop: 8, display: "block" }}
+                        />
+                      );
+                    }
+                    if (part.match(/https?:\/\/[^\s]+/)) {
+                      return (
+                        <a
+                          key={i}
+                          href={part}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={S.postLink}
+                        >
+                          {part}
+                        </a>
+                      );
+                    }
+                    return part;
+                  })}
+                </p>
               )}
 
-              {p.image && <img src={`http://localhost:5000${p.image}`} style={S.postImage} alt="post" />}
-
-              {user._id === p.userId?.toString() && (
-                <div style={S.actionRow}>
-                  <button onClick={() => {
-                    setEditingPostId(p._id);
-                    setEditPostText(p.content);
-                  }} style={S.commentBtn}>Edit</button>
-
-                  <button onClick={() => handleDeletePost(p._id)} style={S.commentBtn}>Delete</button>
-                </div>
+              {/* Image — now a Cloudinary URL, visible to everyone */}
+              {p.image && (
+                <img src={p.image} style={S.postImage} alt="post" />
               )}
 
+              {/* Reactions */}
               <div style={S.reactions}>
                 {emojis.map((e, i) => (
                   <button
                     key={i}
-                    style={{ ...S.emojiBtn, fontWeight: userReaction === e ? "bold" : "normal" }}
+                    style={{
+                      ...S.emojiBtn,
+                      fontWeight: userReaction === e ? "bold" : "normal",
+                      background: userReaction === e ? "#f3e8ff" : "transparent"
+                    }}
                     onClick={() => handleReaction(p._id, e)}
                   >
-                    {e} {countReactions[i] > 0 && countReactions[i]}
+                    {e} {countReactions[i] > 0 && <span style={S.reactionCount}>{countReactions[i]}</span>}
                   </button>
                 ))}
-
                 {userReaction && (
-                  <button onClick={() => handleRemoveReaction(p._id)} style={S.commentBtn}>
-                    Remove
-                  </button>
+                  <button onClick={() => handleRemoveReaction(p._id)} style={S.commentBtn}>Remove</button>
                 )}
               </div>
 
+              {/* Comments */}
               <div style={S.comments}>
                 {postComments.map(c => (
                   <div key={c._id} style={S.commentBox}>
+                    {/* ADDED: commenter profile pic or avatar fallback */}
+                    {renderAvatar(c.userId?.toString(), c.username)}
                     <div style={S.commentText}>
                       {editingCommentId === c._id ? (
                         <>
@@ -216,17 +359,10 @@ export default function PostPage() {
                         <><strong>{c.username || "Unknown User"}</strong>: {c.text}</>
                       )}
                     </div>
-
                     {c.userId?.toString() === user._id && (
                       <div>
-                        <button onClick={() => {
-                          setEditingCommentId(c._id);
-                          setEditCommentText(c.text);
-                        }} style={S.commentBtn}>Edit</button>
-
-                        <button onClick={() => handleDeleteComment(c)} style={S.commentBtn}>
-                          Delete
-                        </button>
+                        <button onClick={() => { setEditingCommentId(c._id); setEditCommentText(c.text); }} style={S.commentBtn}>Edit</button>
+                        <button onClick={() => handleDeleteComment(c)} style={S.commentBtn}>Delete</button>
                       </div>
                     )}
                   </div>
@@ -274,8 +410,20 @@ const S = {
     boxShadow: "0 6px 18px rgba(157,107,157,0.15)"
   },
 
-  postHeader: { display: "flex", justifyContent: "space-between", marginBottom: 10 },
-  timestamp: { fontSize: 11, color: "#9d6b9d" },
+  // ── Avatar & composer row ──
+  composerAuthor: { display: "flex", alignItems: "center", gap: 10, marginBottom: 12 },
+  composerName: { fontSize: 14, fontFamily: "sans-serif", color: "#3b0764", fontWeight: 500 },
+
+  postHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 },
+  postAuthorRow: { display: "flex", alignItems: "center", gap: 10 },
+  postAvatar: {
+    width: 36, height: 36, borderRadius: "50%",
+    background: "linear-gradient(135deg, #e879a8, #c084c4)",
+    color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+    fontSize: 14, fontWeight: "bold", flexShrink: 0
+  },
+  postAuthor: { fontSize: 14, color: "#3b0764", fontFamily: "sans-serif" },
+  timestamp: { fontSize: 11, color: "#9d6b9d", fontFamily: "sans-serif" },
 
   textarea: {
     width: "100%",
@@ -284,19 +432,33 @@ const S = {
     border: "1px solid #e9d5ff",
     resize: "vertical",
     boxSizing: "border-box",
-    marginBottom: 10
+    marginBottom: 10,
+    fontFamily: "sans-serif",
+    fontSize: 14,
+    color: "#3b0764",
+    outline: "none"
   },
 
-  postText: { marginTop: 10, lineHeight: 1.6, wordBreak: "break-word" },
+  postText: { marginTop: 10, lineHeight: 1.6, wordBreak: "break-word", fontFamily: "sans-serif", color: "#3b0764" },
+  postLink: {
+    color: "#7c3aed", fontSize: 13, fontFamily: "sans-serif",
+    wordBreak: "break-all", textDecoration: "none"
+  },
 
-  btn: { padding: "8px 16px", borderRadius: 8, border: "none", background: "#c084c4", color: "#fff", cursor: "pointer" },
+  btn: { padding: "8px 16px", borderRadius: 8, border: "none", background: "#c084c4", color: "#fff", cursor: "pointer", fontFamily: "sans-serif", fontSize: 13 },
 
-  postActions: { display: "flex", justifyContent: "space-between", alignItems: "center" },
-  checkbox: { display: "flex", gap: 6, alignItems: "center" },
-  actionRow: { marginTop: 10, display: "flex", gap: 8 },
+  postActions: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 },
+  checkbox: { display: "flex", gap: 6, alignItems: "center", fontFamily: "sans-serif", fontSize: 13, color: "#3b0764", cursor: "pointer" },
+  fileLabel: {
+    fontSize: 13, fontFamily: "sans-serif", color: "#9d4edd",
+    cursor: "pointer", display: "flex", alignItems: "center", gap: 4
+  },
+  actionRow: { display: "flex", gap: 6 },
   postImage: { width: "100%", borderRadius: 12, marginTop: 10 },
-  reactions: { display: "flex", gap: 12, marginTop: 12 },
-  emojiBtn: { background: "transparent", border: "none", fontSize: 18, cursor: "pointer" },
+
+  reactions: { display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap", alignItems: "center" },
+  emojiBtn: { border: "none", fontSize: 18, cursor: "pointer", borderRadius: 20, padding: "4px 8px", display: "flex", alignItems: "center", gap: 3 },
+  reactionCount: { fontSize: 12, fontFamily: "sans-serif", color: "#7c3aed" },
 
   comments: { marginTop: 12 },
 
@@ -315,7 +477,10 @@ const S = {
     flex: 1,
     minWidth: 0,
     wordBreak: "break-word",
-    overflowWrap: "anywhere"
+    overflowWrap: "anywhere",
+    fontSize: 13,
+    fontFamily: "sans-serif",
+    color: "#3b0764"
   },
 
   commentInput: {
@@ -323,16 +488,22 @@ const S = {
     padding: 8,
     borderRadius: 8,
     border: "1px solid #e9d5ff",
-    marginTop: 6
+    marginTop: 6,
+    fontFamily: "sans-serif",
+    fontSize: 13,
+    boxSizing: "border-box",
+    outline: "none"
   },
 
   commentBtn: {
     marginLeft: 6,
-    padding: "4px 8px",
-    borderRadius: 6,
+    padding: "4px 10px",
+    borderRadius: 8,
     border: "none",
-    background: "#c084c4",
-    color: "#fff",
-    cursor: "pointer"
+    background: "#e9d5ff",
+    color: "#7c3aed",
+    cursor: "pointer",
+    fontSize: 12,
+    fontFamily: "sans-serif"
   }
 };

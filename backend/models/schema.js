@@ -328,12 +328,14 @@ const Comment = mongoose.model("Comment", commentSchema);
 const groupSchema = new mongoose.Schema({
   name: String,
   category: String,
-  creatorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+  creatorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  username: String,
 });
 const Group = mongoose.model("Group", groupSchema);
 
 const groupMemberSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  username: String,
   groupId: { type: mongoose.Schema.Types.ObjectId, ref: "Group" }
 });
 const GroupMember = mongoose.model("GroupMember", groupMemberSchema);
@@ -341,6 +343,7 @@ const GroupMember = mongoose.model("GroupMember", groupMemberSchema);
 const groupPostSchema = new mongoose.Schema({
   groupId: { type: mongoose.Schema.Types.ObjectId, ref: "Group" },
   authorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  username: String,
   content: String,
   timestamp: { type: Date, default: Date.now }
 });
