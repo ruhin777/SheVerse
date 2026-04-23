@@ -21,6 +21,7 @@ const aibotRoutes       = require("./routes/aibotRoutes");
 const postRoutes        = require("./routes/postRoutes");       // ADD for posts
 
 const incidentRoutes    = require("./routes/incidentRoutes");
+const liveLocationRoutes = require("./routes/liveLocationRoutes");
 
 const app = express();
 
@@ -43,13 +44,14 @@ app.use("/api/guides",      guideRoutes);
 app.use("/api/hotels",      hotelRoutes);
 app.use("/api/marketplace", marketplaceRoutes); 
 app.use("/api/contacts", trustedContactRoutes);// ADD
-app.use("/api/marketplace", marketplaceRoutes);
+
 app.use("/api/period",      menstrualRoutes);
 app.use("/api/articles",    articleRoutes);
 app.use("/api/lifestyle",   lifestyleRoutes);
 app.use("/api/exercises",   exerciseRoutes);
 app.use("/api/aibot",       aibotRoutes);
 app.use("/api/incidents", incidentRoutes);
+app.use("/api/live-location", liveLocationRoutes);
 
 app.get("/", (req, res) => res.send("SheVerse API running ✅"));
 app.use("/api/posts",       postRoutes);       // ADD for posts

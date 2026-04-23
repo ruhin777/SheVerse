@@ -10,23 +10,24 @@ import AuthPage from "./pages/AuthPage";
 // ── TODO: Team members import their pages here ──
 import TrustedContactsPage from "./pages/TrustedContactsPage";
 // import SOSPage from "./pages/safety/SOSPage";
-// import LiveLocationPage from "./pages/safety/LiveLocationPage";
+import LiveLocationPage from "./pages/LiveLocationPage";
+import EmergencyServicesPage from "./pages/EmergencyServicesPage";
 import IncidentReportPage from "./pages/IncidentReportPage";
-// import EmergencyServicesPage from "./pages/safety/EmergencyServicesPage";
- import MenstrualTracker from './pages/MenstrualTracker';
- import LifestylePage from "./pages/LifestylePage";
- import ArticlesPage from "./pages/ArticlesPage";
- import ExercisePage from "./pages/ExercisePage";
- import AIBotPage from "./pages/AIBotPage";
- import GuidePage from "./pages/GuidePage";
- import HotelPage from "./pages/HotelPage";
- import MarketplacePage from "./pages/MarketplacePage";
+import MenstrualTracker from './pages/MenstrualTracker';
+import LifestylePage from "./pages/LifestylePage";
+import ArticlesPage from "./pages/ArticlesPage";
+import ExercisePage from "./pages/ExercisePage";
+import AIBotPage from "./pages/AIBotPage";
+import GuidePage from "./pages/GuidePage";
+import HotelPage from "./pages/HotelPage";
+import MarketplacePage from "./pages/MarketplacePage";
 // import FeedPage from "./pages/social/FeedPage";
 // import MenstrualTrackerPage from "./pages/health/MenstrualTrackerPage";
 // import LifestylePage from "./pages/health/LifestylePage";
 // import ArticlesPage from "./pages/health/ArticlesPage";
 // import ExercisePage from "./pages/health/ExercisePage";
 // import AIChatPage from "./pages/health/AIChatPage";
+// import FeedPage from "./pages/social/FeedPage";
 import PostPage from "./pages/PostPage"; // ── ADDED for Social Feed
 // import GroupsPage from "./pages/social/GroupsPage";
 // import ProfilePage from "./pages/social/ProfilePage";
@@ -88,7 +89,6 @@ function ComingSoon({ title }) {
     </div>
   );
 }
-
 
 const P = {
   wrap:  { minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" },
@@ -184,8 +184,8 @@ function App() {
           {/* Safety — TODO */}
           <Route path="/safety/contacts"    element={<TrustedContactsPage />} />
           <Route path="/safety/sos"         element={<ComingSoon title="SOS Alert" />} />
-          <Route path="/safety/location"    element={<ComingSoon title="Live Location Sharing" />} />
-          <Route path="/safety/emergency"   element={<ComingSoon title="Emergency Services" />} />
+          <Route path="/safety/location"     element={<LiveLocationPage />} />
+          <Route path="/safety/emergency"    element={<EmergencyServicesPage />} />
           <Route path="/safety/report"      element={<IncidentReportPage />} />
 
           {/* Health — TODO */}
@@ -196,7 +196,7 @@ function App() {
           <Route path="/health/ai-bot"   element={<AIBotPage/>} />
 
           {/* Social — TODO */}
-          <Route path="/social/feed"        element={<PostPage />} /> {/* ── UPDATED to use PostPage */}
+          <Route path="/social/feed"        element={<PostPage />} />
           <Route path="/social/groups"      element={<ComingSoon title="Interest Groups" />} />
           <Route path="/social/profile"     element={<ComingSoon title="My Profile" />} />
           <Route path="/social/chat"        element={<ComingSoon title="Messages" />} />
