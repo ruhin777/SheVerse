@@ -9,6 +9,9 @@ import AuthPage from "./pages/AuthPage";
 
 // ── TODO: Team members import their pages here ──
 import TrustedContactsPage from "./pages/TrustedContactsPage";
+// import SOSPage from "./pages/safety/SOSPage";
+import LiveLocationPage from "./pages/LiveLocationPage";
+import EmergencyServicesPage from "./pages/EmergencyServicesPage";
 import IncidentReportPage from "./pages/IncidentReportPage";
 import MenstrualTracker from './pages/MenstrualTracker';
 import LifestylePage from "./pages/LifestylePage";
@@ -22,6 +25,7 @@ import PostPage from "./pages/PostPage";
 import GroupPage from "./pages/GroupPage";
 import ProfilePage from "./pages/ProfilePage";
 import MessagePage         from "./pages/MessagePage";
+
 
 // ── Nav Structure ──
 const NAV = [
@@ -172,11 +176,12 @@ function App() {
           <Route path="/travel/hotels" element={<HotelPage />} />
           <Route path="/travel/marketplace" element={<MarketplacePage />} />
 
-          <Route path="/safety/contacts" element={<TrustedContactsPage />} />
-          <Route path="/safety/sos" element={<ComingSoon title="SOS Alert" />} />
-          <Route path="/safety/location" element={<ComingSoon title="Live Location Sharing" />} />
-          <Route path="/safety/emergency" element={<ComingSoon title="Emergency Services" />} />
-          <Route path="/safety/report" element={<IncidentReportPage />} />
+          {/* Safety — TODO */}
+          <Route path="/safety/contacts"    element={<TrustedContactsPage />} />
+          <Route path="/safety/sos"         element={<ComingSoon title="SOS Alert" />} />
+          <Route path="/safety/location"     element={<LiveLocationPage />} />
+          <Route path="/safety/emergency"    element={<EmergencyServicesPage />} />
+          <Route path="/safety/report"      element={<IncidentReportPage />} />
 
           <Route path="/health/menstrual" element={<MenstrualTracker />} />
           <Route path="/health/lifestyle" element={<LifestylePage />} />
