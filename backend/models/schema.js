@@ -24,18 +24,25 @@ const trustedContactSchema = new mongoose.Schema({
 });
 const TrustedContact = mongoose.model("TrustedContact", trustedContactSchema);
 
-const sosAlertSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  locationLink: String,
-  message: String,
-  timestamp: { type: Date, default: Date.now }
+// ── SOS Alert ──────────────────────────────────────────────
+const SOSAlertSchema = new mongoose.Schema({
+  senderId:      { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  senderName:    { type: String, required: true },
+  latitude:      { type: Number, required: true },
+  longitude:     { type: Number, required: true },
+  message:       { type: String, default: "🚨 I need help! This is an emergency." },
+  notifiedContacts: [{ name: String, phone: String }],
+  createdAt:     { type: Date, default: Date.now },
+  resolved:      { type: Boolean, default: false },
 });
-const SOSAlert = mongoose.model("SOSAlert", sosAlertSchema);
+
+const SOSAlert = mongoose.model("SOSAlert", SOSAlertSchema);
 
 const liveLocationSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   latitude: Number,
   longitude: Number,
+  sharing: { type: Boolean, default: true },
   timestamp: { type: Date, default: Date.now }
 });
 const LiveLocation = mongoose.model("LiveLocation", liveLocationSchema);
@@ -328,12 +335,14 @@ const Comment = mongoose.model("Comment", commentSchema);
 const groupSchema = new mongoose.Schema({
   name: String,
   category: String,
-  creatorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+  creatorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  username: String,
 });
 const Group = mongoose.model("Group", groupSchema);
 
 const groupMemberSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  username: String,
   groupId: { type: mongoose.Schema.Types.ObjectId, ref: "Group" }
 });
 const GroupMember = mongoose.model("GroupMember", groupMemberSchema);
@@ -341,6 +350,7 @@ const GroupMember = mongoose.model("GroupMember", groupMemberSchema);
 const groupPostSchema = new mongoose.Schema({
   groupId: { type: mongoose.Schema.Types.ObjectId, ref: "Group" },
   authorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  username: String,
   content: String,
   timestamp: { type: Date, default: Date.now }
 });

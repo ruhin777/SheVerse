@@ -1,22 +1,13 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
-const multer = require("multer");
-const path = require("path");
-
-// ── Multer setup ──
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) { cb(null, "uploads/"); },
-  filename: function (req, file, cb) { cb(null, Date.now() + path.extname(file.originalname)); }
-});
-const upload = multer({ storage });
 
 // ── Schemas ──
 const postSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   username: { type: String, required: true },
   content: { type: String, required: true },
-  image: { type: String },
+  image: { type: String, default: null },   // now stores a Cloudinary URL
   isAnonymous: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });
@@ -40,19 +31,17 @@ const Comment = mongoose.models.Comment || mongoose.model("Comment", commentSche
 
 // ── POSTS ──
 
-// Create Post
-router.post("/", upload.single("image"), async (req, res) => {
+// Create Post — receives JSON (image is already a Cloudinary URL from frontend)
+router.post("/", async (req, res) => {
   try {
-    const { userId, username, content, isAnonymous } = req.body;
+    const { userId, username, content, isAnonymous, image } = req.body;
     const isAnon = isAnonymous === "true" || isAnonymous === true;
-
-    const image = req.file ? `/uploads/${req.file.filename}` : null;
 
     const post = new Post({
       userId,
-      username, // always store real username
+      username,
       content,
-      image,
+      image: image || null,   // Cloudinary URL or null
       isAnonymous: isAnon,
     });
 
@@ -119,7 +108,6 @@ router.delete("/:id/:userId", async (req, res) => {
 
 // ── REACTIONS ──
 
-// Add / Update reaction
 router.post("/reaction", async (req, res) => {
   try {
     const { postId, userId, emoji } = req.body;
@@ -136,7 +124,6 @@ router.post("/reaction", async (req, res) => {
   }
 });
 
-// Remove reaction
 router.delete("/reaction", async (req, res) => {
   try {
     const { postId, userId } = req.body;
@@ -149,7 +136,6 @@ router.delete("/reaction", async (req, res) => {
   }
 });
 
-// Get reactions
 router.get("/reaction/:postId", async (req, res) => {
   try {
     const reactions = await Reaction.find({ postId: req.params.postId });
@@ -161,7 +147,6 @@ router.get("/reaction/:postId", async (req, res) => {
 
 // ── COMMENTS ──
 
-// Add comment
 router.post("/comment", async (req, res) => {
   try {
     const { postId, userId, username, text } = req.body;
@@ -175,7 +160,6 @@ router.post("/comment", async (req, res) => {
   }
 });
 
-// Get comments
 router.get("/comment/:postId", async (req, res) => {
   try {
     const comments = await Comment.find({ postId: req.params.postId }).sort({ createdAt: 1 });
@@ -185,7 +169,6 @@ router.get("/comment/:postId", async (req, res) => {
   }
 });
 
-// Edit comment
 router.put("/comment/:id", async (req, res) => {
   try {
     const { text, userId } = req.body;
@@ -206,7 +189,6 @@ router.put("/comment/:id", async (req, res) => {
   }
 });
 
-// Delete comment
 router.delete("/comment/:id/:userId", async (req, res) => {
   try {
     const { id, userId } = req.params;

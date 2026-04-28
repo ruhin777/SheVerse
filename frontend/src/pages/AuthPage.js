@@ -11,8 +11,11 @@ export default function AuthPage({ onLogin }) {
 
   const handleSubmit = async () => {
     setError("");
+  //if (!form.email || !form.password) { setError("Email and password are required."); return; }
+  //  if (!isLogin && !form.name) { setError("Name is required."); return; }
     if (!form.email || !form.password) { setError("Email and password are required."); return; }
     if (!isLogin && !form.name) { setError("Name is required."); return; }
+    if (!isLogin && !form.phone.trim()) { setError("Phone number is required."); return; }
     setLoading(true);
     try {
       const url = isLogin ? `${API}/login` : `${API}/register`;
@@ -134,7 +137,7 @@ export default function AuthPage({ onLogin }) {
 
             {!isLogin && (
               <div style={S.inputGroup}>
-                <label style={S.label}>PHONE NUMBER <span style={{ color: "#c084c4" }}>(optional)</span></label>
+                <label style={S.label}>PHONE NUMBER</label>
                 <input
                   style={S.input}
                   placeholder="+880 ..."

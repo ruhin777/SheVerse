@@ -8,9 +8,9 @@ export default function TrustedContactsPage() {
   const [status, setStatus] = useState(null);
   const [message, setMessage] = useState("");
 
-  const token = localStorage.getItem("token");
-
   const fetchContacts = async () => {
+    const token = localStorage.getItem("token"); // ✅ fresh read each time
+    if (!token) return;
     try {
       const res = await API.get("/api/contacts", {
         headers: { Authorization: `Bearer ${token}` },
@@ -24,6 +24,7 @@ export default function TrustedContactsPage() {
   }, []);
 
   const handleSubmit = async () => {
+    const token = localStorage.getItem("token"); // ✅ fresh read
     setStatus(null);
     if (!form.name || !form.phone) {
       setStatus("error");
@@ -67,6 +68,7 @@ export default function TrustedContactsPage() {
   };
 
   const deleteContact = async (id) => {
+    const token = localStorage.getItem("token"); // ✅ fresh read
     try {
       await API.delete(`/api/contacts/${id}`, {
         headers: { Authorization: `Bearer ${token}` },

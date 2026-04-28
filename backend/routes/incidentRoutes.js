@@ -50,7 +50,7 @@ router.post("/", async (req, res) => {
 });
 
 // PUT /api/incidents/:id — Edit a report
-// ✅ Fix: match by _id only (not userId) so anonymous reports can also be edited
+// Fix: match by _id only (not userId) so anonymous reports can also be edited
 router.put("/:id", async (req, res) => {
   try {
     const userId = getUserId(req);
@@ -69,7 +69,7 @@ router.put("/:id", async (req, res) => {
       ? incidentType
       : "";
 
-    // ✅ Fix: find by _id only, not { _id, userId } — anonymous reports have userId null
+    // Fix: find by _id only, not { _id, userId } — anonymous reports have userId null
     const report = await IncidentReport.findById(req.params.id);
     if (!report) return res.status(404).json({ error: "Report not found." });
 
@@ -87,13 +87,32 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+// GET /api/incidents/map — All incidents with coordinates for the map
+router.get("/map", async (req, res) => {
+  try {
+    // Only return non-anonymous reports that have a location string
+    // We geocode the location string on the frontend using Nominatim (free)
+    const reports = await IncidentReport.find({
+      anonymous: false,
+      location: { $exists: true, $ne: "" },
+    })
+      .select("description location dateTime incidentType")
+      .sort({ dateTime: -1 })
+      .limit(200);
+
+    res.json(reports);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/incidents/my — Current user's own reports (both anonymous and with identity)
 router.get("/my", async (req, res) => {
   try {
     const userId = getUserId(req);
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
-    // ✅ Fix: fetch reports where userId matches OR that were submitted while logged in
+    // Fix: fetch reports where userId matches OR that were submitted while logged in
     const reports = await IncidentReport.find({ userId }).sort({ dateTime: -1 });
     res.json(reports);
   } catch (err) {
