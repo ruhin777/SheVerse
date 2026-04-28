@@ -50,7 +50,7 @@ app.get("/", (req, res) => res.send("SheVerse API running"));
 
 app.listen(process.env.PORT, () => {
   console.log("Server running on port " + process.env.PORT);
-app.use("/api/marketplace", marketplaceRoutes);   // ✅ only once
+
 app.use("/api/contacts",    trustedContactRoutes);
 app.use("/api/period",      menstrualRoutes);
 app.use("/api/articles",    articleRoutes);
