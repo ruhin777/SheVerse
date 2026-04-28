@@ -7,26 +7,26 @@ const path = require("path");
 const http        = require("http");
 const { Server }  = require("socket.io");
 
-const placeRoutes       = require("./routes/placeRoutes");
-const tripRoutes        = require("./routes/tripRoutes");
-const authRoutes        = require("./routes/authRoutes");
-const guideRoutes       = require("./routes/guideRoutes");
-const hotelRoutes       = require("./routes/hotelRoutes");
-const marketplaceRoutes = require("./routes/marketplaceRoutes"); 
-const trustedContactRoutes = require("./routes/trustedContactRoutes"); // ADD
 
-const menstrualRoutes   = require("./routes/menstrualRoutes");
-const articleRoutes     = require("./routes/articleRoutes");
-const lifestyleRoutes   = require("./routes/lifestyleRoutes");
-const exerciseRoutes    = require("./routes/exerciseRoutes");
-const aibotRoutes       = require("./routes/aibotRoutes");
-
-const postRoutes        = require("./routes/postRoutes");      
+const authRoutes        = require("./routes/authRoutes");   
 const groupRoutes = require("./routes/groupRoutes");
 const profileRoutes = require("./routes/profileRoutes")
-const incidentRoutes    = require("./routes/incidentRoutes");
 const messageRoutes        = require("./routes/messageRoutes");
 const liveLocationRoutes = require("./routes/liveLocationRoutes");
+const placeRoutes          = require("./routes/placeRoutes");
+const tripRoutes           = require("./routes/tripRoutes");
+const guideRoutes          = require("./routes/guideRoutes");
+const hotelRoutes          = require("./routes/hotelRoutes");
+const marketplaceRoutes    = require("./routes/marketplaceRoutes");
+const trustedContactRoutes = require("./routes/trustedContactRoutes");
+const menstrualRoutes      = require("./routes/menstrualRoutes");
+const articleRoutes        = require("./routes/articleRoutes");
+const lifestyleRoutes      = require("./routes/lifestyleRoutes");
+const exerciseRoutes       = require("./routes/exerciseRoutes");
+const aibotRoutes          = require("./routes/aibotRoutes");
+const postRoutes           = require("./routes/postRoutes");
+const incidentRoutes       = require("./routes/incidentRoutes");
+const paymentRoutes        = require("./routes/paymentRoutes");
 
 const app = express();
 
@@ -48,10 +48,13 @@ app.use(express.json());
 // ✅ ADDED: Serve uploaded images
 //app.use("/uploads", express.static("uploads"));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Serve uploaded images
+
 
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB Connected"))
-  .catch(err => console.log("❌ MongoDB Error:", err));
+  .then(() => console.log("MongoDB Connected"))
+  .catch(err => console.log(err));
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // ── Message model (needed for saving inside Socket.io events) ──
@@ -157,11 +160,11 @@ app.use("/api/aibot",       aibotRoutes);
 app.use("/api/incidents", incidentRoutes);
 app.use("/api/live-location", liveLocationRoutes);
 
-app.get("/", (req, res) => res.send("SheVerse API running ✅"));
 app.use("/api/posts",       postRoutes);       // ADD for posts
 app.use("/api/groups", groupRoutes);
-app.use("/api/profile", profileRoutes)
+app.use("/api/profile", profileRoutes);
 app.use("/api/messages",    messageRoutes);
+app.use("/api/payment",     paymentRoutes);
 app.get("/", (req, res) => res.send("SheVerse API running"));
 // ── NEW: use httpServer.listen instead of app.listen ──
 httpServer.listen(process.env.PORT, () => {
@@ -171,4 +174,5 @@ httpServer.listen(process.env.PORT, () => {
 //app.listen(process.env.PORT, () => {
 //  console.log("🚀 Server running on port " + process.env.PORT);
 //});
+
 
