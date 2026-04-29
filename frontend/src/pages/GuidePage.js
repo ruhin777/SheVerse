@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import {StripePayment} from "./StripePaymentPage";
+import { downloadReceipt } from "./ReceiptPage";
 import axios from "axios";
 
 const API = "http://localhost:5000/api/guides";
@@ -13,7 +15,8 @@ export default function GuidePage() {
   const [bookings, setBookings]     = useState([]);
   const [activeTab, setActiveTab]   = useState("browse");
   const [success, setSuccess]       = useState("");
-
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentData, setPaymentData] = useState(null);
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const fetchGuides = async () => {
@@ -39,23 +42,87 @@ export default function GuidePage() {
     }
   };
 
-  const handleBook = async () => {
-    if (!bookingDate) { alert("Please select a booking date!"); return; }
-    try {
-      await axios.post(`${API}/book`, {
-        userId: user._id,
-        guideId: selected._id,
-        bookingDate,
-      });
-      setSuccess(`Booking request sent to ${selected.name}!`);
-      setSelected(null);
-      setBookDate("");
-      fetchBookings();
-      setTimeout(() => setSuccess(""), 4000);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  
+ // ── Book only (pending) ──
+const handleBookLater = async () => {
+  if (!bookingDate) { alert("Please select a booking date!"); return; }
+  try {
+    await axios.post(`${API}/book`, {
+      userId: user._id, guideId: selected._id, bookingDate,
+    });
+    setSelected(null); setBookDate("");
+    setSuccess(`Booking saved! You can pay later from My Bookings.`);
+    fetchBookings();
+    setActiveTab("bookings");
+    setTimeout(() => setSuccess(""), 5000);
+  } catch (err) { console.error(err); }
+};
+
+// ── Book and pay now ──
+const handleBook = async () => {
+  if (!bookingDate) { alert("Please select a booking date!"); return; }
+  try {
+    const { data } = await axios.post(`${API}/book`, {
+      userId: user._id, guideId: selected._id, bookingDate,
+    });
+    setPaymentData({
+      bookingId: data.booking._id,
+      amount: selected.pricePerDay,
+      guide: selected,
+      bookingDate,
+    });
+    setSelected(null); setBookDate("");
+    setShowPayment(true);
+  } catch (err) { console.error(err); }
+};
+
+// ── Pay from My Bookings ──
+const handlePayNow = (booking) => {
+  setPaymentData({
+    bookingId: booking._id,
+    amount: booking.guideId?.pricePerDay,
+    guide: booking.guideId,
+  });
+  setShowPayment(true);
+};
+
+const handleDownloadReceipt = (booking) => {
+  downloadReceipt({
+    type: "guide",
+    name: `Guide: ${booking.guideId?.name}`,
+    date: new Date().toLocaleDateString(),
+    amount: booking.guideId?.pricePerDay,
+    userName: user.name,
+    receiptId: booking._id?.toString().slice(-8).toUpperCase(),
+    details: [
+      { label: "Guide", value: booking.guideId?.name },
+      { label: "Destination", value: booking.guideId?.destination },
+      { label: "Language", value: booking.guideId?.language },
+      { label: "Booking Date", value: new Date(booking.bookingDate).toLocaleDateString() },
+      { label: "Rate", value: `৳ ${booking.guideId?.pricePerDay?.toLocaleString()} / day` },
+    ]
+  });
+};
+  
+
+
+
+const handlePaymentSuccess = async (stripePaymentId) => {
+  try {
+    await axios.post("http://localhost:5000/api/payment/confirm-guide", {
+      bookingId: paymentData.bookingId,
+      stripePaymentId,
+      userId: user._id,
+      amount: paymentData.amount,
+    });
+    setShowPayment(false);
+    setSuccess(`Payment successful! ${paymentData.guide.name} is booked!`);
+    fetchBookings();
+    setTimeout(() => setSuccess(""), 5000);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   useEffect(() => { fetchGuides(); }, [destination]);
   useEffect(() => { if (activeTab === "bookings") fetchBookings(); }, [activeTab]);
@@ -154,7 +221,7 @@ export default function GuidePage() {
                       </div>
 
                       <button style={S.bookBtn} onClick={() => setSelected(guide)}>
-                        Book This Guide
+                        Book & Pay
                       </button>
                     </div>
                   </div>
@@ -191,6 +258,7 @@ export default function GuidePage() {
                       Booking Date: {new Date(b.bookingDate).toLocaleDateString()}
                     </p>
                   </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
                   <span style={{
                     ...S.statusBadge,
                     background: b.paymentStatus === "paid" ? "#d1fae5" : "#fef3c7",
@@ -198,6 +266,15 @@ export default function GuidePage() {
                   }}>
                     {b.paymentStatus}
                   </span>
+                  {b.paymentStatus === "pending" && (
+                    <button style={S.payNowBtn} onClick={() => handlePayNow(b)}>Pay Now</button>
+                  )}
+                  {b.paymentStatus === "paid" && (
+                    <button style={S.receiptBtn} onClick={() => handleDownloadReceipt(b)}>
+                      Download Receipt
+                    </button>
+                  )}
+                </div>
                 </div>
               ))
             )}
@@ -253,9 +330,17 @@ export default function GuidePage() {
               <p style={S.summaryValue}>৳ {selected.pricePerDay?.toLocaleString()} per day</p>
             </div>
 
-            <button style={S.confirmBtn} onClick={handleBook}>
-              Confirm Booking Request
-            </button>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+  <button
+    style={{ padding: 13, background: "transparent", border: "1px solid #9d4edd", color: "#9d4edd", borderRadius: 10, cursor: "pointer", fontSize: 12, fontFamily: "sans-serif" }}
+    onClick={handleBookLater}
+  >
+    Book · Pay Later
+  </button>
+  <button style={S.confirmBtn} onClick={handleBook}>
+    Book & Pay Now
+  </button>
+</div>
 
             <p style={S.modalNote}>
               The guide will contact you on {selected.contact} to confirm the booking.
@@ -263,13 +348,23 @@ export default function GuidePage() {
           </div>
         </div>
       )}
+    {showPayment && paymentData && (
+  <StripePayment
+    amount={paymentData.amount}
+    type="guide"
+    onSuccess={handlePaymentSuccess}
+    onCancel={() => setShowPayment(false)}
+    metadata={{ type: "guide", bookingId: paymentData.bookingId }}
+  />
+)}
+
     </div>
   );
 }
 
 const S = {
   wrapper:      { position: "relative", minHeight: "100vh", fontFamily: "'Georgia', serif" },
-  bg:           { position: "fixed", inset: 0, backgroundImage: "url('https://plus.unsplash.com/premium_photo-1716866638194-947ba7b24ef8?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')", backgroundSize: "cover", backgroundPosition: "center", filter: "blur(0.80px)", transform: "scale(1.05)", zIndex: -2 },
+  bg:           { position: "fixed", inset: 0, backgroundImage: "url('https://plus.unsplash./premium_photo-1716866638194-947ba7b24ef8?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')", backgroundSize: "cover", backgroundPosition: "center", filter: "blur(0.80px)", transform: "scale(1.05)", zIndex: -2 },
   overlay:      { position: "fixed", inset: 0, background: "rgba(255,245,250,0.82)", zIndex: -1 },
   page:         { maxWidth: 1100, margin: "auto", padding: "40px 24px" },
 
@@ -343,4 +438,7 @@ const S = {
 
   confirmBtn:   { width: "100%", padding: 14, background: "linear-gradient(135deg,#7c3aed,#c084c4)", color: "#fff", border: "none", borderRadius: 10, cursor: "pointer", fontSize: 13, fontFamily: "sans-serif", letterSpacing: 2, marginBottom: 14 },
   modalNote:    { fontSize: 11, color: "#c084c4", fontFamily: "sans-serif", textAlign: "center", lineHeight: 1.6 },
+
+  payNowBtn:  { padding: "8px 16px", background: "linear-gradient(135deg,#7c3aed,#c084c4)", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 11, fontFamily: "sans-serif", letterSpacing: 1, whiteSpace: "nowrap" },
+  receiptBtn: { padding: "8px 16px", background: "transparent", border: "1px solid #059669", color: "#059669", borderRadius: 8, cursor: "pointer", fontSize: 11, fontFamily: "sans-serif", letterSpacing: 1, whiteSpace: "nowrap" },
 };

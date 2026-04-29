@@ -8,22 +8,24 @@ import TripPage from "./pages/TripPage";
 import AuthPage from "./pages/AuthPage";
 
 // ── TODO: Team members import their pages here ──
+import TrustedContactsPage from "./pages/TrustedContactsPage";
 // import SOSPage from "./pages/safety/SOSPage";
-// import LiveLocationPage from "./pages/safety/LiveLocationPage";
-// import IncidentReportPage from "./pages/safety/IncidentReportPage";
-// import EmergencyServicesPage from "./pages/safety/EmergencyServicesPage";
- import MenstrualTracker from './pages/MenstrualTracker';
- import LifestylePage from "./pages/LifestylePage";
- import ArticlesPage from "./pages/ArticlesPage";
- import ExercisePage from "./pages/ExercisePage";
- import AIBotPage from "./pages/AIBotPage";
- import GuidePage from "./pages/GuidePage";
- import HotelPage from "./pages/HotelPage";
- import MarketplacePage from "./pages/MarketplacePage";
-// import FeedPage from "./pages/social/FeedPage";
-// import GroupsPage from "./pages/social/GroupsPage";
-// import ProfilePage from "./pages/social/ProfilePage";
-// import ChatPage from "./pages/social/ChatPage";
+import LiveLocationPage from "./pages/LiveLocationPage";
+import EmergencyServicesPage from "./pages/EmergencyServicesPage";
+import IncidentReportPage from "./pages/IncidentReportPage";
+import MenstrualTracker from './pages/MenstrualTracker';
+import LifestylePage from "./pages/LifestylePage";
+import ArticlesPage from "./pages/ArticlesPage";
+import ExercisePage from "./pages/ExercisePage";
+import AIBotPage from "./pages/AIBotPage";
+import GuidePage from "./pages/GuidePage";
+import HotelPage from "./pages/HotelPage";
+import MarketplacePage from "./pages/MarketplacePage";
+import PostPage from "./pages/PostPage";
+import GroupPage from "./pages/GroupPage";
+import ProfilePage from "./pages/ProfilePage";
+import MessagePage         from "./pages/MessagePage";
+
 
 
 // ── Nav Structure ──
@@ -31,44 +33,44 @@ const NAV = [
   {
     section: "Safety",
     links: [
-      { label: "SOS Alert",          path: "/safety/sos" },
-      { label: "Live Location",       path: "/safety/location" },
-      { label: "Emergency Services",  path: "/safety/emergency" },
-      { label: "Report Incident",     path: "/safety/report" },
+      { label: "SOS Alert", path: "/safety/sos" },
+      { label: "Live Location", path: "/safety/location" },
+      { label: "Emergency Services", path: "/safety/emergency" },
+      { label: "Report Incident", path: "/safety/report" },
+      { label: "Trusted Contacts", path: "/safety/contacts" },
     ]
   },
   {
     section: "Health",
     links: [
-      { label: "Menstrual Tracker",   path: "/health/menstrual" },
-      { label: "Lifestyle & BMI",     path: "/health/lifestyle" },
-      { label: "Articles & Tips",     path: "/health/articles" },
-      { label: "Exercise Guidance",   path: "/health/exercise" },
-      { label: "AI Health Bot",       path: "/health/ai-bot" },
+      { label: "Menstrual Tracker", path: "/health/menstrual" },
+      { label: "Lifestyle & BMI", path: "/health/lifestyle" },
+      { label: "Articles & Tips", path: "/health/articles" },
+      { label: "Exercise Guidance", path: "/health/exercise" },
+      { label: "AI Health Bot", path: "/health/ai-bot" },
     ]
   },
   {
     section: "Travel",
     links: [
-      { label: "Explore Places",      path: "/travel/places" },
-      { label: "Trip Planning",       path: "/travel/trips" },
-      { label: "Female Guides",       path: "/travel/guides" },
-      { label: "Hotel Booking",       path: "/travel/hotels" },
-      { label: "Marketplace",         path: "/travel/marketplace" },
+      { label: "Explore Places", path: "/travel/places" },
+      { label: "Trip Planning", path: "/travel/trips" },
+      { label: "Female Guides", path: "/travel/guides" },
+      { label: "Hotel Booking", path: "/travel/hotels" },
+      { label: "Marketplace", path: "/travel/marketplace" },
     ]
   },
   {
     section: "Social",
     links: [
-      { label: "Community Feed",      path: "/social/feed" },
-      { label: "Groups",              path: "/social/groups" },
-      { label: "My Profile",          path: "/social/profile" },
-      { label: "Messages",            path: "/social/chat" },
+      { label: "Community Feed", path: "/social/feed" },
+      { label: "Groups", path: "/social/groups" },
+      { label: "My Profile", path: "/social/profile" },
+      { label: "Messages", path: "/social/chat" },
     ]
   },
 ];
 
-// ── Placeholder for unbuilt pages ──
 function ComingSoon({ title }) {
   return (
     <div style={P.wrap}>
@@ -82,27 +84,32 @@ function ComingSoon({ title }) {
   );
 }
 
-
 const P = {
-  wrap:  { minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" },
-  box:   { textAlign: "center", padding: 48 },
-  sub:   { fontSize: 10, letterSpacing: 4, color: "#c084c4", fontFamily: "sans-serif", marginBottom: 12 },
+  wrap: { minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" },
+  box: { textAlign: "center", padding: 48 },
+  sub: { fontSize: 10, letterSpacing: 4, color: "#c084c4", fontFamily: "sans-serif", marginBottom: 12 },
   title: { fontSize: 28, fontWeight: 400, color: "#3b0764", fontFamily: "Georgia, serif", margin: "0 0 16px" },
-  line:  { width: 40, height: 2, background: "linear-gradient(90deg,#c084c4,#e879a8)", margin: "0 auto 20px" },
-  desc:  { fontSize: 14, color: "#9d6b9d", fontFamily: "sans-serif", lineHeight: 1.8 },
+  line: { width: 40, height: 2, background: "linear-gradient(90deg,#c084c4,#e879a8)", margin: "0 auto 20px" },
+  desc: { fontSize: 14, color: "#9d6b9d", fontFamily: "sans-serif", lineHeight: 1.8 },
 };
 
-// ── Main App ──
 function App() {
-  const [user, setUser]         = useState(null);
-  const [menuOpen, setMenuOpen] = useState(null); // which dropdown is open
+  const [user, setUser] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(null);
+  const [profileViewId, setProfileViewId] = useState(null);
+
+  // ✅ ADDED (correct place)
+  const handleViewProfile = (uid) => {
+    setProfileViewId(uid || null);
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem("user");
     if (saved) setUser(JSON.parse(saved));
   }, []);
 
-  const handleLogin  = (userData) => setUser(userData);
+  const handleLogin = (userData) => setUser(userData);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -115,15 +122,11 @@ function App() {
     <div style={styles.app}>
       <BrowserRouter>
 
-        {/* ── Navbar ── */}
         <nav style={styles.navbar}>
-
-          {/* Logo */}
-          <Link to="/travel/places" style={styles.logo}>
+          <Link to="/social/feed" style={styles.logo}>
             SheVerse
           </Link>
 
-          {/* Nav Links with Dropdowns */}
           <div style={styles.navCenter}>
             {NAV.map((section) => (
               <div
@@ -134,7 +137,6 @@ function App() {
               >
                 <span style={styles.navLabel}>{section.section}</span>
 
-                {/* Dropdown */}
                 {menuOpen === section.section && (
                   <div style={styles.dropdown}>
                     <p style={styles.dropdownTitle}>{section.section.toUpperCase()}</p>
@@ -143,6 +145,12 @@ function App() {
                         key={link.path}
                         to={link.path}
                         style={styles.dropdownLink}
+
+                        // ✅ ONLY CHANGE: reset profileViewId for My Profile
+                        onClick={() => {
+                          if (link.path === "/social/profile") setProfileViewId(null);
+                        }}
+
                         onMouseEnter={(e) => e.currentTarget.style.background = "#f3e8ff"}
                         onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                       >
@@ -155,46 +163,49 @@ function App() {
             ))}
           </div>
 
-          {/* User */}
           <div style={styles.navRight}>
             <span style={styles.greeting}>{user.name}</span>
             <button style={styles.logoutBtn} onClick={handleLogout}>Sign Out</button>
           </div>
         </nav>
 
-        {/* ── Routes ── */}
         <Routes>
+          <Route path="/travel/places" element={<PlacesPage />} />
+          <Route path="/travel/trips" element={<TripPage />} />
 
-          {/* Travel — Built */}
-          <Route path="/travel/places"      element={<PlacesPage />} />
-          <Route path="/travel/trips"       element={<TripPage />} />
-
-          {/* Travel — TODO */}
-          <Route path="/travel/guides"      element={<GuidePage />} />
-          <Route path="/travel/hotels"      element={<HotelPage />} />
+          <Route path="/travel/guides" element={<GuidePage />} />
+          <Route path="/travel/hotels" element={<HotelPage />} />
           <Route path="/travel/marketplace" element={<MarketplacePage />} />
 
           {/* Safety — TODO */}
+          <Route path="/safety/contacts"    element={<TrustedContactsPage />} />
           <Route path="/safety/sos"         element={<ComingSoon title="SOS Alert" />} />
-          <Route path="/safety/location"    element={<ComingSoon title="Live Location Sharing" />} />
-          <Route path="/safety/emergency"   element={<ComingSoon title="Emergency Services" />} />
-          <Route path="/safety/report"      element={<ComingSoon title="Incident Reporting" />} />
+          <Route path="/safety/location"     element={<LiveLocationPage />} />
+          <Route path="/safety/emergency"    element={<EmergencyServicesPage />} />
+          <Route path="/safety/report"      element={<IncidentReportPage />} />
 
-          {/* Health — TODO */}
           <Route path="/health/menstrual" element={<MenstrualTracker />} />
           <Route path="/health/lifestyle" element={<LifestylePage />} />
           <Route path="/health/articles" element={<ArticlesPage />} />
           <Route path="/health/exercise" element={<ExercisePage />} />
-          <Route path="/health/ai-bot"   element={<AIBotPage/>} />
+          <Route path="/health/ai-bot" element={<AIBotPage />} />
 
-          {/* Social — TODO */}
-          <Route path="/social/feed"        element={<ComingSoon title="Community Feed" />} />
-          <Route path="/social/groups"      element={<ComingSoon title="Interest Groups" />} />
-          <Route path="/social/profile"     element={<ComingSoon title="My Profile" />} />
-          <Route path="/social/chat"        element={<ComingSoon title="Messages" />} />
+          <Route path="/social/feed" element={<PostPage />} />
+          <Route path="/social/groups" element={<GroupPage />} />
 
-          {/* Default */}
-          <Route path="*" element={<Navigate to="/travel/places" />} />
+          {/* ✅ already correct, kept same */}
+          <Route
+            path="/social/profile"
+            element={
+              <ProfilePage
+                viewUserId={profileViewId}
+                onViewProfile={handleViewProfile}
+              />
+            }
+          />
+
+          <Route path="/social/chat"      element={<MessagePage />} />
+          <Route path="*" element={<Navigate to="/social/feed" />} />
         </Routes>
 
       </BrowserRouter>
@@ -203,12 +214,7 @@ function App() {
 }
 
 const styles = {
-  app: {
-    minHeight: "100vh",
-    fontFamily: "'Georgia', serif",
-  },
-
-  // Navbar
+  app: { minHeight: "100vh", fontFamily: "'Georgia', serif" },
   navbar: {
     background: "rgba(255,255,255,0.95)",
     backdropFilter: "blur(12px)",
@@ -223,7 +229,6 @@ const styles = {
     top: 0,
     zIndex: 100,
   },
-
   logo: {
     color: "#7c3aed",
     fontWeight: 400,
@@ -232,13 +237,7 @@ const styles = {
     fontFamily: "'Georgia', serif",
     textDecoration: "none",
   },
-
-  navCenter: {
-    display: "flex",
-    gap: 8,
-    alignItems: "center",
-  },
-
+  navCenter: { display: "flex", gap: 8, alignItems: "center" },
   navItem: {
     position: "relative",
     padding: "0 16px",
@@ -247,7 +246,6 @@ const styles = {
     alignItems: "center",
     cursor: "pointer",
   },
-
   navLabel: {
     fontSize: 12,
     letterSpacing: 2,
@@ -255,7 +253,6 @@ const styles = {
     fontFamily: "sans-serif",
     fontWeight: 500,
   },
-
   dropdown: {
     position: "absolute",
     top: 60,
@@ -269,7 +266,6 @@ const styles = {
     padding: "8px 0",
     zIndex: 200,
   },
-
   dropdownTitle: {
     fontSize: 9,
     letterSpacing: 3,
@@ -278,7 +274,6 @@ const styles = {
     padding: "8px 20px 4px",
     margin: 0,
   },
-
   dropdownLink: {
     display: "block",
     padding: "10px 20px",
@@ -289,20 +284,13 @@ const styles = {
     transition: "background 0.2s",
     letterSpacing: 0.5,
   },
-
-  navRight: {
-    display: "flex",
-    gap: 16,
-    alignItems: "center",
-  },
-
+  navRight: { display: "flex", gap: 16, alignItems: "center" },
   greeting: {
     color: "#9d6b9d",
     fontSize: 13,
     fontFamily: "sans-serif",
     letterSpacing: 1,
   },
-
   logoutBtn: {
     background: "transparent",
     color: "#9d4edd",

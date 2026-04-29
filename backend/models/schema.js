@@ -13,7 +13,6 @@ const userSchema = new mongoose.Schema({
   weight: Number,
   createdAt: { type: Date, default: Date.now }
 });
-
 const User = mongoose.model("User", userSchema);
 
 // ================= SAFETY SYSTEM =================
@@ -24,18 +23,25 @@ const trustedContactSchema = new mongoose.Schema({
 });
 const TrustedContact = mongoose.model("TrustedContact", trustedContactSchema);
 
-const sosAlertSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  locationLink: String,
-  message: String,
-  timestamp: { type: Date, default: Date.now }
+// ── SOS Alert ──────────────────────────────────────────────
+const SOSAlertSchema = new mongoose.Schema({
+  senderId:      { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  senderName:    { type: String, required: true },
+  latitude:      { type: Number, required: true },
+  longitude:     { type: Number, required: true },
+  message:       { type: String, default: "🚨 I need help! This is an emergency." },
+  notifiedContacts: [{ name: String, phone: String }],
+  createdAt:     { type: Date, default: Date.now },
+  resolved:      { type: Boolean, default: false },
 });
-const SOSAlert = mongoose.model("SOSAlert", sosAlertSchema);
+
+const SOSAlert = mongoose.model("SOSAlert", SOSAlertSchema);
 
 const liveLocationSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   latitude: Number,
   longitude: Number,
+  sharing: { type: Boolean, default: true },
   timestamp: { type: Date, default: Date.now }
 });
 const LiveLocation = mongoose.model("LiveLocation", liveLocationSchema);
@@ -45,7 +51,8 @@ const incidentReportSchema = new mongoose.Schema({
   description: String,
   location: String,
   dateTime: Date,
-  anonymous: Boolean
+  anonymous: Boolean,
+  incidentType: { type: String, default: "" }
 });
 const IncidentReport = mongoose.model("IncidentReport", incidentReportSchema);
 
@@ -152,9 +159,7 @@ const placeSchema = new mongoose.Schema({
   description: String,
   rating: { type: Number, default: 0 },
   tags: [String],
-  coordinates: {lat: Number,
-    lng: Number,
-  },
+  coordinates: { lat: Number, lng: Number },
 });
 const Place = mongoose.model("Place", placeSchema);
 
@@ -166,9 +171,7 @@ const restaurantSchema = new mongoose.Schema({
   image: String,
   rating: Number,
   priceRange: String,
-  coordinates: {lat: Number,
-    lng: Number,
-  },
+  coordinates: { lat: Number, lng: Number },
   placeId: { type: mongoose.Schema.Types.ObjectId, ref: "Place" }
 });
 const Restaurant = mongoose.model("Restaurant", restaurantSchema);
@@ -197,19 +200,41 @@ const guideBookingSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   guideId: { type: mongoose.Schema.Types.ObjectId, ref: "Guide" },
   bookingDate: Date,
-  paymentStatus: String
+  paymentStatus: { type: String, default: "pending" },
+  paymentMethod: { type: String, default: "card" }, // ✅ card | cod
+  stripePaymentId: { type: String, default: "" }
 });
 const GuideBooking = mongoose.model("GuideBooking", guideBookingSchema);
 
+// ✅ UPDATED: Hotel now has roomTypes array
 const hotelSchema = new mongoose.Schema({
   name: String,
   location: String,
-  pricePerNight: Number,
-  rating: Number,
+  pricePerNight: Number, // base price (kept for backward compat)
+  rating: { type: Number, default: 0 },
   safetyVerified: Boolean,
   image: String,
   amenities: [String],
-  description: String
+  description: String,
+  // ✅ NEW: room types with individual pricing
+  roomTypes: [
+    {
+      type:         { type: String }, // Standard | Deluxe | Suite
+      pricePerNight: Number,
+      description:  String,
+      amenities:    [String],
+    }
+  ],
+  // ✅ NEW: reviews embedded
+  reviews: [
+    {
+      userId:    { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      userName:  String,
+      rating:    Number,
+      comment:   String,
+      createdAt: { type: Date, default: Date.now }
+    }
+  ]
 });
 const Hotel = mongoose.model("Hotel", hotelSchema);
 
@@ -222,7 +247,8 @@ const tripPlanSchema = new mongoose.Schema({
   budget: Number,
   travelType: String,
   teamSize: Number,
-  preferences: String
+  preferences: String,
+  createdAt: { type: Date, default: Date.now }
 });
 const TripPlan = mongoose.model("TripPlan", tripPlanSchema);
 
@@ -230,17 +256,25 @@ const travelBuddyMatchSchema = new mongoose.Schema({
   tripId: { type: mongoose.Schema.Types.ObjectId, ref: "TripPlan" },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   matchedUserId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  status: String
+  status: { type: String, default: "pending" },
+  paymentStatus: { type: String, default: "pending" },  // ✅ track trip payment
+  paymentMethod: { type: String, default: "card" },     // ✅ card | cod
+  stripePaymentId: { type: String, default: "" },
+  createdAt: { type: Date, default: Date.now }
 });
 const TravelBuddyMatch = mongoose.model("TravelBuddyMatch", travelBuddyMatchSchema);
 
+// ✅ UPDATED: Booking now has roomType + paymentMethod
 const bookingSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  hotelId: { type: mongoose.Schema.Types.ObjectId, ref: "Hotel" },
-  checkIn: Date,
-  checkOut: Date,
-  paymentStatus: String,
-  stripePaymentId: String
+  userId:          { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  hotelId:         { type: mongoose.Schema.Types.ObjectId, ref: "Hotel" },
+  checkIn:         Date,
+  checkOut:        Date,
+  roomType:        { type: String, default: "Standard" },   // ✅ NEW
+  pricePerNight:   { type: Number, default: 0 },             // ✅ NEW — store selected room price
+  paymentStatus:   { type: String, default: "pending" },
+  paymentMethod:   { type: String, default: "card" },        // ✅ card | cod
+  stripePaymentId: { type: String, default: "" }
 });
 const Booking = mongoose.model("Booking", bookingSchema);
 
@@ -257,14 +291,23 @@ const Product = mongoose.model("Product", productSchema);
 
 const orderSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  totalPrice: Number,
-  paymentStatus: String,
-  orderDate: { type: Date, default: Date.now }
+  items: [
+    {
+      productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+      quantity: Number,
+      price: Number
+    }
+  ],
+  totalPrice:      Number,
+  paymentStatus:   { type: String, default: "pending" },
+  paymentMethod:   { type: String, default: "card" },   // ✅ card | cod
+  stripePaymentId: { type: String, default: "" },
+  orderDate:       { type: Date, default: Date.now }
 });
 const Order = mongoose.model("Order", orderSchema);
 
 const orderItemSchema = new mongoose.Schema({
-  orderId: { type: mongoose.Schema.Types.ObjectId, ref: "Order" },
+  orderId:   { type: mongoose.Schema.Types.ObjectId, ref: "Order" },
   productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
   quantity: Number,
   price: Number
@@ -273,40 +316,53 @@ const OrderItem = mongoose.model("OrderItem", orderItemSchema);
 
 // ================= PAYMENT SYSTEM =================
 const paymentSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  amount: Number,
-  paymentMethod: String,
+  userId:          { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  amount:          Number,
+  currency:        { type: String, default: "bdt" },
+  paymentMethod:   { type: String, default: "card" },  // ✅ card | cod
   stripePaymentId: String,
-  paymentStatus: String,
+  paymentStatus:   { type: String, default: "pending" },
+  type: {
+    type: String,
+    enum: ["hotel", "guide", "trip", "order"],
+    required: true
+  },
+  referenceId: mongoose.Schema.Types.ObjectId,
+  metadata:    Object,
   paymentDate: { type: Date, default: Date.now }
 });
 const Payment = mongoose.model("Payment", paymentSchema);
 
 // ================= REVIEW SYSTEM =================
 const reviewSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  rating: Number,
+  userId:  { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  rating:  Number,
   comment: String,
-  date: { type: Date, default: Date.now },
-  placeId: { type: mongoose.Schema.Types.ObjectId, ref: "Place", default: null },
-  hotelId: { type: mongoose.Schema.Types.ObjectId, ref: "Hotel", default: null },
-  guideId: { type: mongoose.Schema.Types.ObjectId, ref: "Guide", default: null }
+  date:    { type: Date, default: Date.now },
+  placeId: { type: mongoose.Schema.Types.ObjectId, ref: "Place",  default: null },
+  hotelId: { type: mongoose.Schema.Types.ObjectId, ref: "Hotel",  default: null },
+  guideId: { type: mongoose.Schema.Types.ObjectId, ref: "Guide",  default: null }
 });
 const Review = mongoose.model("Review", reviewSchema);
 
 // ================= SOCIAL FEED =================
 const postSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  username: String,
   content: String,
   image: String,
+  userId:      { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  username:    String,
+  content:     String,
+  image:       String,
   isAnonymous: Boolean,
-  timestamp: { type: Date, default: Date.now }
+  timestamp:   { type: Date, default: Date.now }
 });
 const Post = mongoose.model("Post", postSchema);
 
 const reactionSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  postId: { type: mongoose.Schema.Types.ObjectId, ref: "Post" },
+  userId:      { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  postId:      { type: mongoose.Schema.Types.ObjectId, ref: "Post" },
   groupPostId: { type: mongoose.Schema.Types.ObjectId, ref: "GroupPost" },
   emoji: String
 });
@@ -314,10 +370,14 @@ const Reaction = mongoose.model("Reaction", reactionSchema);
 
 const commentSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  username: String,
   postId: { type: mongoose.Schema.Types.ObjectId, ref: "Post" },
+  userId:      { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  username:    String,
+  postId:      { type: mongoose.Schema.Types.ObjectId, ref: "Post" },
   groupPostId: { type: mongoose.Schema.Types.ObjectId, ref: "GroupPost" },
-  text: String,
-  timestamp: { type: Date, default: Date.now }
+  text:        String,
+  timestamp:   { type: Date, default: Date.now }
 });
 const Comment = mongoose.model("Comment", commentSchema);
 
@@ -325,12 +385,14 @@ const Comment = mongoose.model("Comment", commentSchema);
 const groupSchema = new mongoose.Schema({
   name: String,
   category: String,
-  creatorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+  creatorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  username: String,
 });
 const Group = mongoose.model("Group", groupSchema);
 
 const groupMemberSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  username: String,
   groupId: { type: mongoose.Schema.Types.ObjectId, ref: "Group" }
 });
 const GroupMember = mongoose.model("GroupMember", groupMemberSchema);
@@ -338,6 +400,7 @@ const GroupMember = mongoose.model("GroupMember", groupMemberSchema);
 const groupPostSchema = new mongoose.Schema({
   groupId: { type: mongoose.Schema.Types.ObjectId, ref: "Group" },
   authorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  username: String,
   content: String,
   timestamp: { type: Date, default: Date.now }
 });
@@ -345,7 +408,7 @@ const GroupPost = mongoose.model("GroupPost", groupPostSchema);
 
 // ================= FRIEND SYSTEM =================
 const friendRequestSchema = new mongoose.Schema({
-  senderId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  senderId:   { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   receiverId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   status: String
 });
@@ -353,50 +416,21 @@ const FriendRequest = mongoose.model("FriendRequest", friendRequestSchema);
 
 // ================= CHAT SYSTEM =================
 const messageSchema = new mongoose.Schema({
-  senderId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  senderId:   { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   receiverId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  content: String,
-  timestamp: { type: Date, default: Date.now }
+  content:    String,
+  timestamp:  { type: Date, default: Date.now }
 });
 const Message = mongoose.model("Message", messageSchema);
 
 // ================= EXPORT ALL =================
 module.exports = {
-  User,
-  TrustedContact,
-  SOSAlert,
-  LiveLocation,
-  IncidentReport,
-  EmergencyService,
-  PeriodCycle,
-  SymptomLog,
-  BMIRecord,
-  TodoTask,
-  Exercise,
-  ExerciseLog,
-  Article,
-  Bookmark,
-  ChatBotQuery,
-  Place,
-  Restaurant,
-  Recommendation,
-  Guide,
-  GuideBooking,
-  Hotel,
-  TripPlan,
-  TravelBuddyMatch,
-  Booking,
-  Product,
-  Order,
-  OrderItem,
-  Payment,
-  Review,
-  Post,
-  Reaction,
-  Comment,
-  Group,
-  GroupMember,
-  GroupPost,
-  FriendRequest,
-  Message
+  User, TrustedContact, SOSAlert, LiveLocation, IncidentReport, EmergencyService,
+  PeriodCycle, SymptomLog, BMIRecord, TodoTask, Exercise, ExerciseLog,
+  Article, Bookmark, ChatBotQuery,
+  Place, Restaurant, Recommendation, Guide, GuideBooking,
+  Hotel, TripPlan, TravelBuddyMatch, Booking,
+  Product, Order, OrderItem, Payment, Review,
+  Post, Reaction, Comment, Group, GroupMember, GroupPost,
+  FriendRequest, Message
 };
