@@ -22,16 +22,14 @@ export const getDashboard = (userId) =>
 
 // Log a symptom
 export const addSymptom = (cycleId, symptom, date) =>
-  API.post("/api/symptom/add", { cycleId, symptom, date });
-
+  API.post("/api/period/symptom/add", { cycleId, symptom, date });
 // Get symptoms for a user on a specific date
 export const getSymptomsForDate = (userId, date) =>
-  API.get(`/api/symptom/user/${userId}/${date}`);
+  API.get(`/api/period/symptom/user/${userId}/${date}`);
 
 // Get all symptoms history for a user
 export const getSymptomHistory = (userId) =>
-  API.get(`/api/symptom/history/${userId}`);
-
+  API.get(`/api/period/symptom/history/${userId}`);
 // Log today's period as new entry
 export const logTodayPeriod = (userId, startDate, endDate, cycleLength, periodLength) =>
   API.post("/api/period/log-today", { userId, startDate, endDate, cycleLength, periodLength });
@@ -43,3 +41,4 @@ export const getAllPeriods = (userId) =>
 // Undo last period log
 export const undoLastPeriod = (userId) =>
   API.delete(`/api/period/undo/${userId}`);
+

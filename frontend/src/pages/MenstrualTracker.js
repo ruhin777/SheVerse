@@ -57,6 +57,7 @@ function Onboarding({ onComplete }) {
   const [lastStart, setLastStart]     = useState("");
   const [saving, setSaving]           = useState(false);
   const [error, setError]             = useState("");
+  
 
   const handleSave = async () => {
     if (!lastStart) return setError("Please select your last period start date.");
@@ -341,6 +342,7 @@ export default function MenstrualTracker() {
   const [todaySymptoms, setTodaySymptoms] = useState([]);
   const [symptomMsg, setSymptomMsg]       = useState(null);
   const [symHistory, setSymHistory]       = useState([]);
+  const [periodLogged, setPeriodLogged] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -373,11 +375,13 @@ export default function MenstrualTracker() {
   const handleUndoPeriod = async () => {
     if (!window.confirm("Remove your last logged period?")) return;
     try {
-        const res = await undoLastPeriod(TEMP_USER_ID);
-        if (res.data.success) await loadDashboard();
-        else alert("Nothing to undo.");
+      const res = await undoLastPeriod(TEMP_USER_ID);
+      if (res.data.success) {
+        setPeriodLogged(false);
+        await loadDashboard();
+      } else alert("Nothing to undo.");
     } catch { alert("❌ Failed. Try again."); }
-   };
+  };
 
   useEffect(() => {
     getCycleProfile(TEMP_USER_ID)
@@ -392,20 +396,31 @@ export default function MenstrualTracker() {
   const toggleSymptom = (label) =>
     setSelSymptoms(p => p.includes(label) ? p.filter(s => s !== label) : [...p, label]);
 
-  const handleLogSymptoms = async () => {
-    setSymptomMsg(null);
-    if (!selSymptoms.length) return setSymptomMsg({ type:"error", text:"Select at least one symptom." });
-    if (!dashboard?.currentCycle) return;
-    try {
-      const profileRes = await getCycleProfile(TEMP_USER_ID);
-      const cycleId = profileRes.data.cycle._id;
-      for (const s of selSymptoms) await addSymptom(cycleId, s, today);
-      setSymptomMsg({ type:"success", text:`✅ ${selSymptoms.length} symptom(s) logged for today!` });
-      setTodaySymptoms(prev => [...new Set([...prev, ...selSymptoms])]);
-      setSelSymptoms([]);
-      loadSymptomHistory();
-    } catch { setSymptomMsg({ type:"error", text:"❌ Failed. Try again." }); }
-  };
+const handleLogSymptoms = async () => {
+  setSymptomMsg(null);
+  if (!selSymptoms.length) return setSymptomMsg({ type:"error", text:"Select at least one symptom." });
+  if (!dashboard?.currentCycle) return setSymptomMsg({ type:"error", text:"No active cycle found." });
+  
+  try {
+    const profileRes = await getCycleProfile(TEMP_USER_ID);
+    console.log("Profile response:", profileRes.data); // 👈 check this in browser console
+    
+    const cycleId = profileRes.data?.cycle?._id;
+    if (!cycleId) return setSymptomMsg({ type:"error", text:"Could not find your cycle ID. Try refreshing." });
+
+    for (const s of selSymptoms) {
+      await addSymptom(cycleId, s, today);
+    }
+
+    setSymptomMsg({ type:"success", text:`✅ ${selSymptoms.length} symptom(s) logged for today!` });
+    setTodaySymptoms(prev => [...new Set([...prev, ...selSymptoms])]);
+    setSelSymptoms([]);
+    loadSymptomHistory();
+  } catch (err) {
+    console.error("Symptom save error:", err.response?.data || err.message); // 👈 check this too
+    setSymptomMsg({ type:"error", text:"❌ Failed. Try again." });
+  }
+};
 
   const handleLogTodayPeriod = async () => {
     try {
@@ -414,7 +429,10 @@ export default function MenstrualTracker() {
       const endDate = new Date();
       endDate.setDate(endDate.getDate() + periodLength - 1);
       const res = await logTodayPeriod(TEMP_USER_ID, today, endDate.toISOString().split("T")[0], cycleLength, periodLength);
-      if (res.data.success) await loadDashboard();
+      if (res.data.success) {
+        setPeriodLogged(true);
+        await loadDashboard();
+      }
     } catch { alert("❌ Failed to log. Check if server is running."); }
   };
 
@@ -467,13 +485,7 @@ export default function MenstrualTracker() {
       `}</style>
 
       {/* HEADER */}
-      <div style={S.header}>
-        <div>
-          <div style={S.logo}>🌸 SheVerse</div>
-          <div style={S.subtitle}>Health Tracker</div>
-        </div>
-        <button className="settings-btn" style={S.settingsBtn} onClick={() => setShowSettings(true)}>⚙️</button>
-      </div>
+     
 
       {showSettings && (
         <SettingsModal profile={dashboard?.profile} onClose={() => setShowSettings(false)}
@@ -506,17 +518,19 @@ export default function MenstrualTracker() {
           <span style={{ ...S.chipVal, fontSize:"1.1rem" }}>Day {dashboard.currentCycle?.dayOfCycle}</span>
         </div>
       </div>
-      <div style={{ display:"flex", gap:16, width:"100%", marginTop:20 }}>
+      
+      <div style={{ width:"100%", marginTop:20 }}>
         <button className="flo-main-btn"
-          style={{ ...S.btn, flex:1, justifyContent:"center", marginTop:0, background:"linear-gradient(120deg,#e8637a,#c0392b)", fontSize:"1.05rem", padding:"16px" }}
-          onClick={handleLogTodayPeriod}>
-          🩸 Log Period Today
-        </button>
-        <button onClick={handleUndoPeriod}
-          style={{ display:"flex", flex:1, alignItems:"center", justifyContent:"center", gap:8, background:"transparent", color:"#e8637a", border:"2px solid #e8637a", borderRadius:14, padding:"16px", fontFamily:"Plus Jakarta Sans, sans-serif", fontSize:"1.05rem", fontWeight:600, cursor:"pointer", marginTop:0 }}>
-          ↩️ Undo Last Period
+          style={{ ...S.btn, width:"100%", justifyContent:"center", marginTop:0,
+            background: periodLogged
+              ? "linear-gradient(120deg,#9b72cf,#6b3fa0)"
+              : "linear-gradient(120deg,#e8637a,#c0392b)",
+            fontSize:"1.05rem", padding:"16px" }}
+          onClick={periodLogged ? handleUndoPeriod : handleLogTodayPeriod}>
+          {periodLogged ? "↩️ Undo Period Log" : "🩸 Log Period Today"}
         </button>
       </div>
+      
     </div>
 
     {/* BOTTOM ROW — 2 cards side by side */}

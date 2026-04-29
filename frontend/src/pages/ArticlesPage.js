@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
+// ── Cloudinary config ──
+const CLOUDINARY_CLOUD_NAME   = "dgtzgke3h";       
+const CLOUDINARY_UPLOAD_PRESET = "sheverse_uploads";
+
 const API = "http://localhost:5000/api/articles";
 const CATEGORIES = ["All", "Nutrition", "Hygiene", "Legal Rights", "Safety", "Education", "Mental Health"];
 
@@ -16,7 +20,7 @@ export default function ArticlesPage() {
   const [selected, setSelected]       = useState(null); // article detail view
   const [userRating, setUserRating]   = useState(0);
   const [ratingMsg, setRatingMsg]     = useState("");
-
+  const [imagePreview, setImagePreview] = useState(null);
   // Write form
   const [form, setForm] = useState({ title:"", category:"Nutrition", content:"", image:"" });
   const [submitting, setSubmitting]   = useState(false);
@@ -331,11 +335,71 @@ export default function ArticlesPage() {
                 </select>
               </div>
 
-              <div style={S.formGroup}>
-                <label style={S.label}>IMAGE URL (optional)</label>
-                <input style={S.input} placeholder="https://example.com/image.jpg"
-                  value={form.image} onChange={e => setForm({ ...form, image: e.target.value })}/>
-              </div>
+           
+            <div style={S.formGroup}>
+              <label style={S.label}>ARTICLE IMAGE (optional)</label>
+
+              {/* File picker */}
+              <input
+                type="file"
+                accept="image/*"
+                id="article-image-upload"
+                style={{ display: "none" }}
+                onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+
+                  // Show local preview immediately
+                  setImagePreview(URL.createObjectURL(file));
+
+                  // Upload directly to Cloudinary (unsigned)
+                  const formData = new FormData();
+                  formData.append("file", file);
+                  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+                  try {
+                    const res = await fetch(
+                      "https://api.cloudinary.com/v1_1/dgtzgke3h/image/upload",
+                      { method: "POST", body: formData }
+                    );
+                    const data = await res.json();
+                    if (data.secure_url) {
+                      setForm(prev => ({ ...prev, image: data.secure_url })); // ✅ real Cloudinary URL
+                    } else {
+                      console.error("Cloudinary error:", data);
+                      alert("Image upload failed. Try again.");
+                    }
+                  } catch (err) {
+                    console.error("Upload error:", err);
+                    alert("Image upload failed.");
+                  }
+                }}
+              />
+
+              <label htmlFor="article-image-upload" style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "10px 20px", background: "#f0e8fb", color: "#6b3fa0",
+                border: "1.5px dashed #c084c4", borderRadius: 12,
+                cursor: "pointer", fontSize: 14, fontFamily: "sans-serif", fontWeight: 500
+              }}>
+                📷 Choose Image from Device
+              </label>
+
+              {/* Preview */}
+              {imagePreview && (
+                <div style={{ marginTop: 12, position: "relative", display: "inline-block" }}>
+                  <img src={imagePreview} alt="preview"
+                    style={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 10 }}/>
+                  <button onClick={() => { setImagePreview(null); setForm({ ...form, image: "" }); }}
+                    style={{
+                      position: "absolute", top: 6, right: 6,
+                      background: "rgba(0,0,0,0.5)", color: "white",
+                      border: "none", borderRadius: "50%", width: 24, height: 24,
+                      cursor: "pointer", fontSize: 12
+                    }}>✕</button>
+                </div>
+              )}
+            </div>
 
               <div style={S.formGroup}>
                 <label style={S.label}>CONTENT</label>
