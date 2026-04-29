@@ -56,7 +56,7 @@ router.post("/", async (req, res) => {
 // Get all posts
 router.get("/", async (req, res) => {
   try {
-    const posts = await Post.find().sort({ createdAt: -1 });
+    const posts = await Post.find().sort({ _id: -1 });
     res.json(posts);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch posts" });

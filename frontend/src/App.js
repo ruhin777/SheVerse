@@ -122,7 +122,7 @@ function App() {
       <BrowserRouter>
 
         <nav style={styles.navbar}>
-          <Link to="/travel/places" style={styles.logo}>
+          <Link to="/social/feed" style={styles.logo}>
             SheVerse
           </Link>
 
@@ -204,7 +204,7 @@ function App() {
           />
 
           <Route path="/social/chat"      element={<MessagePage />} />
-          <Route path="*" element={<Navigate to="/travel/places" />} />
+          <Route path="*" element={<Navigate to="/social/feed" />} />
         </Routes>
 
       </BrowserRouter>
