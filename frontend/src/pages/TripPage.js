@@ -75,12 +75,12 @@ const MyTripCard = ({ trip, selectedTrip, requests, fetchRequests, handleCancel,
           requests.map(r => (
             <div key={r._id} style={S.matchCard}>
               <div style={S.matchAvatar}>{r.userId?.name?.[0] || "?"}</div>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, minWidth:0, overflow: "hidden" }}>
                 <strong style={{ fontSize: 14, color: "#3b0764" }}>{r.userId?.name || "Anonymous"}</strong>
                 <p style={{ fontSize: 12, color: "#9d6b9d", margin: "2px 0" }}>{r.userId?.email}</p>
               </div>
               {r.status === "pending" && (
-                <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ display: "flex", gap:5, marginLeft:"auto",flexShrink:0 }}>
                   <button style={S.acceptBtn} onClick={() => handleStatusUpdate(r._id, "accepted")}>Accept</button>
                   <button style={S.rejectBtn} onClick={() => handleStatusUpdate(r._id, "rejected")}>Reject</button>
                 </div>
@@ -550,10 +550,10 @@ const S = {
   matchPanel:    { marginTop: 16, padding: 16, background: "#faf5ff", borderRadius: 12, border: "1px solid #e9d5ff" },
   matchTitle:    { fontSize: 10, letterSpacing: 3, color: "#c084c4", fontFamily: "sans-serif", marginBottom: 12 },
   noMatch:       { fontSize: 13, color: "#9d6b9d", fontFamily: "sans-serif" },
-  matchCard:     { display: "flex", gap: 12, padding: 10, background: "#fff", borderRadius: 10, marginBottom: 8, alignItems: "center" },
+  matchCard:     { display: "flex", gap: 12, padding: 10, background: "#fff", borderRadius: 10, marginBottom: 8, alignItems: "center", flexWrap: "wrap"  },
   matchAvatar:   { width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#9d4edd,#c77dff)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 600, fontSize: 16, flexShrink: 0 },
-  acceptBtn:     { padding: "6px 14px", background: "linear-gradient(135deg,#059669,#34d399)", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 11, fontFamily: "sans-serif" },
-  rejectBtn:     { padding: "6px 14px", background: "transparent", border: "1px solid #ef4444", color: "#ef4444", borderRadius: 8, cursor: "pointer", fontSize: 11, fontFamily: "sans-serif" },
+  acceptBtn:     { padding: "4px 6px", background: "linear-gradient(135deg,#059669,#34d399)", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 11, fontFamily: "sans-serif" },
+  rejectBtn:     { padding: "4px 6px", background: "transparent", border: "1px solid #ef4444", color: "#ef4444", borderRadius: 8, cursor: "pointer", fontSize: 11, fontFamily: "sans-serif" },
   acceptedBadge: { background: "#d1fae5", color: "#065f46", padding: "4px 10px", borderRadius: 10, fontSize: 11, fontFamily: "sans-serif", whiteSpace: "nowrap" },
   rejectedBadge: { background: "#fee2e2", color: "#991b1b", padding: "4px 10px", borderRadius: 10, fontSize: 11, fontFamily: "sans-serif", whiteSpace: "nowrap" },
   closeSmall:    { marginTop: 10, padding: "6px 16px", background: "transparent", border: "1px solid #e2c4e2", borderRadius: 20, cursor: "pointer", fontSize: 12, fontFamily: "sans-serif", color: "#9d6b9d" },
