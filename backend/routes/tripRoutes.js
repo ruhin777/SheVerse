@@ -48,7 +48,22 @@ router.get("/all", async (req, res) => {
     const trips = await TripPlan.find()
       .populate("userId", "name profilePhoto")
       .sort({ createdAt: -1 });
-    res.json(trips);
+
+    // Add accepted slot count to each trip
+    const tripsWithSlots = await Promise.all(trips.map(async (trip) => {
+      const acceptedCount = await TravelBuddyMatch.countDocuments({
+        tripId: trip._id,
+        status: { $in: ["accepted", "paid"] }
+      });
+      return {
+        ...trip.toObject(),
+        acceptedCount,
+        slotsLeft: Math.max(0, trip.teamSize - acceptedCount),
+        isFull: acceptedCount >= trip.teamSize,
+      };
+    }));
+
+    res.json(tripsWithSlots);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -119,13 +134,26 @@ router.get("/pending/:userId", async (req, res) => {
 router.patch("/requests/:id/status", async (req, res) => {
   try {
     const { status } = req.body;
-    const match = await TravelBuddyMatch.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    ).populate("userId", "name email")
-     .populate("tripId");
+
+    const match = await TravelBuddyMatch.findById(req.params.id).populate("tripId");
     if (!match) return res.status(404).json({ error: "Request not found" });
+
+    // If accepting, check slot limit
+    if (status === "accepted") {
+      const trip = match.tripId;
+      const acceptedCount = await TravelBuddyMatch.countDocuments({
+        tripId: trip._id,
+        status: { $in: ["accepted", "paid"] }
+      });
+      if (acceptedCount >= trip.teamSize) {
+        return res.status(400).json({ error: "Cannot accept — all slots are full!" });
+      }
+    }
+
+    match.status = status;
+    await match.save();
+
+    await match.populate("userId", "name email");
     res.json({ message: `✅ Request ${status}!`, match });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -138,11 +166,29 @@ router.post("/:id/join", async (req, res) => {
     const { userId } = req.body;
     const trip = await TripPlan.findById(req.params.id);
     if (!trip) return res.status(404).json({ error: "Trip not found" });
+
+    // Block solo trips
+    if (trip.travelType === "solo") {
+      return res.status(400).json({ error: "This is a solo trip. No companions allowed." });
+    }
+
+    // Check slot availability
+    const acceptedCount = await TravelBuddyMatch.countDocuments({
+      tripId: req.params.id,
+      status: { $in: ["accepted", "paid"] }
+    });
+
+    if (acceptedCount >= trip.teamSize) {
+      return res.status(400).json({ error: "Sorry, all slots are full for this trip!" });
+    }
+
+    // Check if already requested
     const existing = await TravelBuddyMatch.findOne({
       tripId: req.params.id,
       userId: userId
     });
     if (existing) return res.status(400).json({ error: "Already requested!" });
+
     const match = await TravelBuddyMatch.create({
       tripId: req.params.id,
       userId: userId,
