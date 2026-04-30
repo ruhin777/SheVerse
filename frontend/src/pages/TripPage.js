@@ -10,9 +10,11 @@ const TRAVEL_TYPES = ["solo", "group"];
 
 // ── Browse Card ──
 const BrowseCard = ({ trip, joinedTrips, handleJoin }) => {
-  const isSolo    = trip.travelType === "solo";
-  const isFull    = trip.isFull;
-  const perPerson = trip.teamSize > 0 ? Math.round(trip.budget / trip.teamSize) : trip.budget;
+  const isSolo        = trip.travelType === "solo";
+  const acceptedCount = trip.acceptedCount ?? 0;
+  const slotsLeft     = trip.slotsLeft     ?? Math.max(0, (trip.teamSize || 0) - acceptedCount);
+  const isFull        = trip.isFull        ?? (slotsLeft <= 0);
+  const perPerson     = trip.teamSize > 0  ? Math.round(trip.budget / trip.teamSize) : trip.budget;
   const alreadyJoined = joinedTrips.includes(trip._id);
 
   return (
@@ -73,7 +75,7 @@ const BrowseCard = ({ trip, joinedTrips, handleJoin }) => {
             background: isFull ? "#fee2e2" : "#d1fae5",
             color: isFull ? "#991b1b" : "#065f46",
           }}>
-            {isFull ? "Full" : `${trip.slotsLeft} left`}
+            {isFull ? "Full" : `${slotsLeft} left`}
           </span>
         </div>
       )}
