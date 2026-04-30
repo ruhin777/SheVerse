@@ -9,39 +9,96 @@ const PLACES_API = "http://localhost:5000/api/places";
 const TRAVEL_TYPES = ["solo", "group"];
 
 // ── Browse Card ──
-const BrowseCard = ({ trip, joinedTrips, handleJoin }) => (
-  <div style={S.card}>
-    <div style={S.cardTop}>
-      <div>
-        <p style={S.cardCategory}>{trip.category?.toUpperCase()}</p>
-        <h3 style={S.cardTitle}>{trip.destination}</h3>
+const BrowseCard = ({ trip, joinedTrips, handleJoin }) => {
+  const isSolo    = trip.travelType === "solo";
+  const isFull    = trip.isFull;
+  const perPerson = trip.teamSize > 0 ? Math.round(trip.budget / trip.teamSize) : trip.budget;
+  const alreadyJoined = joinedTrips.includes(trip._id);
+
+  return (
+    <div style={S.card}>
+      <div style={S.cardTop}>
+        <div>
+          <p style={S.cardCategory}>{trip.category?.toUpperCase()}</p>
+          <h3 style={S.cardTitle}>{trip.destination}</h3>
+        </div>
+        <span style={{ ...S.badge, ...(isSolo ? S.badgeSolo : S.badgeGroup) }}>
+          {trip.travelType}
+        </span>
       </div>
-      <span style={{ ...S.badge, ...(trip.travelType === "solo" ? S.badgeSolo : S.badgeGroup) }}>
-        {trip.travelType}
-      </span>
-    </div>
-    <div style={S.divider} />
-    {trip.userId?.name && (
-      <div style={S.postedByRow}>
-        <div style={S.postedAvatar}>{trip.userId.name[0]}</div>
-        <p style={S.postedBy}>Posted by <strong>{trip.userId.name}</strong></p>
+      <div style={S.divider} />
+      {trip.userId?.name && (
+        <div style={S.postedByRow}>
+          <div style={S.postedAvatar}>{trip.userId.name[0]}</div>
+          <p style={S.postedBy}>Posted by <strong>{trip.userId.name}</strong></p>
+        </div>
+      )}
+      <div style={S.infoGrid}>
+        <div style={S.infoItem}>
+          <p style={S.infoLabel}>DATES</p>
+          <p style={S.infoValue}>
+            {new Date(trip.startDate).toLocaleDateString()} — {new Date(trip.endDate).toLocaleDateString()}
+          </p>
+        </div>
+        <div style={S.infoItem}>
+          <p style={S.infoLabel}>TOTAL BUDGET</p>
+          <p style={S.infoValue}>৳ {trip.budget?.toLocaleString()}</p>
+        </div>
+        <div style={S.infoItem}>
+          <p style={S.infoLabel}>GROUP SIZE</p>
+          <p style={S.infoValue}>{trip.teamSize} {trip.teamSize === 1 ? "Person" : "People"}</p>
+        </div>
+        {!isSolo && (
+          <div style={S.infoItem}>
+            <p style={S.infoLabel}>PER PERSON</p>
+            <p style={{ ...S.infoValue, color: "#7c3aed", fontWeight: 600 }}>
+              ৳ {perPerson?.toLocaleString()}
+            </p>
+          </div>
+        )}
+        {trip.preferences && (
+          <div style={S.infoItem}>
+            <p style={S.infoLabel}>PREFERENCES</p>
+            <p style={S.infoValue}>{trip.preferences}</p>
+          </div>
+        )}
       </div>
-    )}
-    <div style={S.infoGrid}>
-      <div style={S.infoItem}><p style={S.infoLabel}>DATES</p><p style={S.infoValue}>{new Date(trip.startDate).toLocaleDateString()} — {new Date(trip.endDate).toLocaleDateString()}</p></div>
-      <div style={S.infoItem}><p style={S.infoLabel}>BUDGET</p><p style={S.infoValue}>৳ {trip.budget?.toLocaleString()}</p></div>
-      <div style={S.infoItem}><p style={S.infoLabel}>GROUP SIZE</p><p style={S.infoValue}>{trip.teamSize} {trip.teamSize === 1 ? "Person" : "People"}</p></div>
-      {trip.preferences && <div style={S.infoItem}><p style={S.infoLabel}>PREFERENCES</p><p style={S.infoValue}>{trip.preferences}</p></div>}
+
+      {/* Slot indicator for group trips */}
+      {!isSolo && (
+        <div style={S.slotRow}>
+          <span style={S.slotLabel}>SLOTS</span>
+          <span style={{
+            ...S.slotBadge,
+            background: isFull ? "#fee2e2" : "#d1fae5",
+            color: isFull ? "#991b1b" : "#065f46",
+          }}>
+            {isFull ? "Full" : `${trip.slotsLeft} left`}
+          </span>
+        </div>
+      )}
+
+      {/* Action button */}
+      {isSolo ? (
+        <div style={S.soloNote}>
+          🔒 This is a solo trip — companions not accepted
+        </div>
+      ) : isFull ? (
+        <div style={S.fullNote}>
+          😔 Sorry, all slots are full for this trip!
+        </div>
+      ) : alreadyJoined ? (
+        <button style={{ ...S.joinBtn, ...S.joinedBtn }} disabled>
+          Request Sent ✓
+        </button>
+      ) : (
+        <button style={S.joinBtn} onClick={() => handleJoin(trip._id)}>
+          Request to Join
+        </button>
+      )}
     </div>
-    <button
-      style={{ ...S.joinBtn, ...(joinedTrips.includes(trip._id) ? S.joinedBtn : {}) }}
-      onClick={() => handleJoin(trip._id)}
-      disabled={joinedTrips.includes(trip._id)}
-    >
-      {joinedTrips.includes(trip._id) ? "Request Sent ✓" : "Request to Join"}
-    </button>
-  </div>
-);
+  );
+};
 
 // ── My Trip Card ──
 const MyTripCard = ({ trip, selectedTrip, requests, fetchRequests, handleCancel, handleStatusUpdate, setSelectedTrip }) => (
@@ -75,16 +132,27 @@ const MyTripCard = ({ trip, selectedTrip, requests, fetchRequests, handleCancel,
           requests.map(r => (
             <div key={r._id} style={S.matchCard}>
               <div style={S.matchAvatar}>{r.userId?.name?.[0] || "?"}</div>
-              <div style={{ flex: 1, minWidth:0, overflow: "hidden" }}>
+              <div style={{ flex: 1 , minWidth:0, overflow: "hidden"}}>
                 <strong style={{ fontSize: 14, color: "#3b0764" }}>{r.userId?.name || "Anonymous"}</strong>
                 <p style={{ fontSize: 12, color: "#9d6b9d", margin: "2px 0" }}>{r.userId?.email}</p>
               </div>
-              {r.status === "pending" && (
-                <div style={{ display: "flex", gap:5, marginLeft:"auto",flexShrink:0 }}>
-                  <button style={S.acceptBtn} onClick={() => handleStatusUpdate(r._id, "accepted")}>Accept</button>
-                  <button style={S.rejectBtn} onClick={() => handleStatusUpdate(r._id, "rejected")}>Reject</button>
-                </div>
-              )}
+                {r.status === "pending" && (
+    <div style={{ display: "flex", gap:5, marginLeft:"auto", flexShrink:0 }}>
+      <button
+        style={{
+          ...S.acceptBtn,
+          ...(trip.isFull ? { opacity: 0.4, cursor: "not-allowed" } : {})
+        }}
+        onClick={() => !trip.isFull && handleStatusUpdate(r._id, "accepted")}
+        title={trip.isFull ? "All slots are full!" : "Accept this request"}
+      >
+        {trip.isFull ? "Slots Full" : "Accept"}
+      </button>
+      <button style={S.rejectBtn} onClick={() => handleStatusUpdate(r._id, "rejected")}>
+        Reject
+      </button>
+    </div>
+  )}
               {r.status === "accepted" && <span style={S.acceptedBadge}>Accepted ✓</span>}
               {r.status === "rejected" && <span style={S.rejectedBadge}>Rejected</span>}
             </div>
@@ -98,12 +166,17 @@ const MyTripCard = ({ trip, selectedTrip, requests, fetchRequests, handleCancel,
 
 // ── Pending Plan Card ──
 const PendingCard = ({ request, user, setShowTripPayment, setTripPaymentData }) => {
-  const trip   = request.tripId;
-  const status = request.status;
+  const trip      = request.tripId;
+  const status    = request.status;
+  const perPerson = trip?.teamSize > 0
+    ? Math.round((trip?.budget || 0) / trip.teamSize)
+    : (trip?.budget || 5000);
+
   const statusStyle = {
     pending:  { bg: "#fef3c7", color: "#92400e", text: "Awaiting Approval" },
     accepted: { bg: "#d1fae5", color: "#065f46", text: "Accepted!" },
     rejected: { bg: "#fee2e2", color: "#991b1b", text: "Request Rejected" },
+    paid:     { bg: "#d1fae5", color: "#065f46", text: "Paid ✓" },
   }[status] || { bg: "#f3f4f6", color: "#6b7280", text: status };
 
   const handleDownloadTripReceipt = async () => {
@@ -111,18 +184,19 @@ const PendingCard = ({ request, user, setShowTripPayment, setTripPaymentData }) 
       type:      "trip",
       name:      `Trip to ${trip?.destination}`,
       date:      new Date().toLocaleDateString(),
-      amount:    trip?.budget || 0,
+      amount:    perPerson,
       userName:  user?.name || "Traveler",
       receiptId: request._id?.toString().slice(-8).toUpperCase(),
       details: [
-        { label: "Destination", value: trip?.destination || "-" },
-        { label: "Category",    value: trip?.category || "-" },
-        { label: "Travel Type", value: trip?.travelType || "-" },
-        { label: "Start Date",  value: trip?.startDate ? new Date(trip.startDate).toLocaleDateString() : "-" },
-        { label: "End Date",    value: trip?.endDate   ? new Date(trip.endDate).toLocaleDateString()   : "-" },
-        { label: "Group Size",  value: `${trip?.teamSize || 1} ${trip?.teamSize === 1 ? "Person" : "People"}` },
-        { label: "Budget",      value: `৳ ${trip?.budget?.toLocaleString() || 0}` },
-        { label: "Payment",     value: request.paymentMethod === "cod" ? "Cash on Delivery" : "Card" },
+        { label: "Destination",  value: trip?.destination || "-" },
+        { label: "Category",     value: trip?.category    || "-" },
+        { label: "Travel Type",  value: trip?.travelType  || "-" },
+        { label: "Start Date",   value: trip?.startDate ? new Date(trip.startDate).toLocaleDateString() : "-" },
+        { label: "End Date",     value: trip?.endDate   ? new Date(trip.endDate).toLocaleDateString()   : "-" },
+        { label: "Group Size",   value: `${trip?.teamSize || 1} People` },
+        { label: "Total Budget", value: `৳ ${trip?.budget?.toLocaleString() || 0}` },
+        { label: "Your Share",   value: `৳ ${perPerson?.toLocaleString()}` },
+        { label: "Payment",      value: request.paymentMethod === "cod" ? "Cash on Delivery" : "Card" },
       ],
     });
   };
@@ -138,29 +212,93 @@ const PendingCard = ({ request, user, setShowTripPayment, setTripPaymentData }) 
           {statusStyle.text}
         </div>
       </div>
+
       <div style={S.divider} />
-      {trip?.userId?.name && <p style={S.postedBy}>Trip by <strong>{trip.userId.name}</strong></p>}
+
+      {trip?.userId?.name && (
+        <p style={S.postedBy}>Trip by <strong>{trip.userId.name}</strong></p>
+      )}
+
       <div style={S.infoGrid}>
-        <div style={S.infoItem}><p style={S.infoLabel}>DATES</p><p style={S.infoValue}>{trip?.startDate && new Date(trip.startDate).toLocaleDateString()} — {trip?.endDate && new Date(trip.endDate).toLocaleDateString()}</p></div>
-        <div style={S.infoItem}><p style={S.infoLabel}>BUDGET</p><p style={S.infoValue}>৳ {trip?.budget?.toLocaleString()}</p></div>
-        <div style={S.infoItem}><p style={S.infoLabel}>GROUP SIZE</p><p style={S.infoValue}>{trip?.teamSize} {trip?.teamSize === 1 ? "Person" : "People"}</p></div>
-        <div style={S.infoItem}><p style={S.infoLabel}>TRAVEL TYPE</p><p style={S.infoValue}>{trip?.travelType}</p></div>
+        <div style={S.infoItem}>
+          <p style={S.infoLabel}>DATES</p>
+          <p style={S.infoValue}>
+            {trip?.startDate && new Date(trip.startDate).toLocaleDateString()} — {trip?.endDate && new Date(trip.endDate).toLocaleDateString()}
+          </p>
+        </div>
+        <div style={S.infoItem}>
+          <p style={S.infoLabel}>TOTAL BUDGET</p>
+          <p style={S.infoValue}>৳ {trip?.budget?.toLocaleString()}</p>
+        </div>
+        <div style={S.infoItem}>
+          <p style={S.infoLabel}>GROUP SIZE</p>
+          <p style={S.infoValue}>{trip?.teamSize} {trip?.teamSize === 1 ? "Person" : "People"}</p>
+        </div>
+        <div style={S.infoItem}>
+          <p style={S.infoLabel}>YOUR SHARE</p>
+          <p style={{ ...S.infoValue, color: "#7c3aed", fontWeight: 700 }}>
+            ৳ {perPerson?.toLocaleString()}
+          </p>
+        </div>
+        <div style={S.infoItem}>
+          <p style={S.infoLabel}>TRAVEL TYPE</p>
+          <p style={S.infoValue}>{trip?.travelType}</p>
+        </div>
+        {trip?.preferences && (
+          <div style={S.infoItem}>
+            <p style={S.infoLabel}>PREFERENCES</p>
+            <p style={S.infoValue}>{trip.preferences}</p>
+          </div>
+        )}
       </div>
 
+      {/* Awaiting */}
+      {status === "pending" && (
+        <div style={S.awaitingNote}>
+          ⏳ Waiting for the trip owner to respond...
+        </div>
+      )}
+
+      {/* Accepted — not paid yet */}
       {status === "accepted" && request.paymentStatus !== "paid" && (
-        <button style={S.payBtn} onClick={() => {
-          setTripPaymentData({ matchId: request._id, amount: trip?.budget || 5000, destination: trip?.destination });
-          setShowTripPayment(true);
-        }}>
-          Proceed to Payment
-        </button>
+        <div>
+          <div style={S.shareBox}>
+            <p style={S.shareLabel}>YOUR PAYMENT</p>
+            <p style={S.shareAmount}>৳ {perPerson?.toLocaleString()}</p>
+            <p style={S.shareNote}>= Total ৳{trip?.budget?.toLocaleString()} ÷ {trip?.teamSize} members</p>
+          </div>
+          <button
+            style={S.payBtn}
+            onClick={() => {
+              setTripPaymentData({
+                matchId: request._id,
+                amount:  perPerson,
+                destination: trip?.destination,
+              });
+              setShowTripPayment(true);
+            }}
+          >
+            Proceed to Payment · ৳ {perPerson?.toLocaleString()}
+          </button>
+        </div>
       )}
-      {status === "accepted" && request.paymentStatus === "paid" && (
-        <>
-          {request.paymentMethod === "cod" && <span style={S.codTag}>💵 Cash on Delivery</span>}
-          <button style={S.receiptBtn} onClick={handleDownloadTripReceipt}>Download Receipt</button>
-        </>
+
+      {/* Paid */}
+      {(status === "paid" || (status === "accepted" && request.paymentStatus === "paid")) && (
+        <div>
+          {request.paymentMethod === "cod" && (
+            <span style={S.codTag}>💵 Cash on Delivery</span>
+          )}
+          <div style={S.paidBox}>
+            <p style={S.paidText}>✓ Payment of ৳ {perPerson?.toLocaleString()} confirmed!</p>
+          </div>
+          <button style={S.receiptBtn} onClick={handleDownloadTripReceipt}>
+            Download Receipt
+          </button>
+        </div>
       )}
+
+      {/* Rejected */}
       {status === "rejected" && (
         <p style={{ fontSize: 12, color: "#9ca3af", fontFamily: "sans-serif", textAlign: "center", marginTop: 8 }}>
           This request was not accepted. Browse other trips!
@@ -256,11 +394,16 @@ export default function TripPage() {
   };
 
   const handleStatusUpdate = async (requestId, status) => {
-    try {
-      await axios.patch(`${API}/requests/${requestId}/status`, { status });
-      setRequests(prev => prev.map(r => r._id === requestId ? { ...r, status } : r));
-    } catch (err) { console.error(err); }
-  };
+  try {
+    await axios.patch(`${API}/requests/${requestId}/status`, { status });
+    setRequests(prev => prev.map(r => r._id === requestId ? { ...r, status } : r));
+    // Refresh trips to update slot count
+    fetchTrips();
+  } catch (err) {
+    const msg = err.response?.data?.error || "Failed to update!";
+    alert(msg); // shows "Cannot accept — all slots are full!" from backend
+  }
+};
 
   const handleJoin = async (tripId) => {
     if (joinedTrips.includes(tripId)) { alert("Already requested!"); return; }
@@ -550,7 +693,7 @@ const S = {
   matchPanel:    { marginTop: 16, padding: 16, background: "#faf5ff", borderRadius: 12, border: "1px solid #e9d5ff" },
   matchTitle:    { fontSize: 10, letterSpacing: 3, color: "#c084c4", fontFamily: "sans-serif", marginBottom: 12 },
   noMatch:       { fontSize: 13, color: "#9d6b9d", fontFamily: "sans-serif" },
-  matchCard:     { display: "flex", gap: 12, padding: 10, background: "#fff", borderRadius: 10, marginBottom: 8, alignItems: "center", flexWrap: "wrap"  },
+  matchCard: { display: "flex", gap: 12, padding: 10, background: "#fff", borderRadius: 10, marginBottom: 8, alignItems: "center", flexWrap: "wrap" },
   matchAvatar:   { width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#9d4edd,#c77dff)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 600, fontSize: 16, flexShrink: 0 },
   acceptBtn:     { padding: "4px 6px", background: "linear-gradient(135deg,#059669,#34d399)", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 11, fontFamily: "sans-serif" },
   rejectBtn:     { padding: "4px 6px", background: "transparent", border: "1px solid #ef4444", color: "#ef4444", borderRadius: 8, cursor: "pointer", fontSize: 11, fontFamily: "sans-serif" },
@@ -572,4 +715,16 @@ const S = {
   recCard:       { border: "1px solid #e9d5ff", borderRadius: 12, overflow: "hidden", background: "#fff" },
   recImg:        { width: "100%", height: 80, objectFit: "cover" },
   recPlaceholder:{ height: 80, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,#e9d5ff,#fce7f3)", fontSize: 28, color: "#9d4edd" },
-};
+  slotRow:    { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+  slotLabel:  { fontSize: 10, letterSpacing: 2, color: "#c084c4", fontFamily: "sans-serif" },
+  slotBadge:  { padding: "3px 12px", borderRadius: 20, fontSize: 11, fontFamily: "sans-serif", fontWeight: 600 },
+  soloNote:   { textAlign: "center", padding: "10px 14px", background: "#f3e8ff", borderRadius: 10, fontSize: 12, color: "#7c3aed", fontFamily: "sans-serif", letterSpacing: 0.5 },
+  fullNote:   { textAlign: "center", padding: "10px 14px", background: "#fee2e2", borderRadius: 10, fontSize: 12, color: "#991b1b", fontFamily: "sans-serif", letterSpacing: 0.5 },
+  awaitingNote: { textAlign: "center", padding: "10px 14px", background: "#fef3c7", borderRadius: 10, fontSize: 12, color: "#92400e", fontFamily: "sans-serif", marginTop: 8 },
+  shareBox:     { background: "#f3e8ff", borderRadius: 12, padding: "14px 16px", marginBottom: 10, textAlign: "center" },
+  shareLabel:   { fontSize: 9, letterSpacing: 3, color: "#c084c4", fontFamily: "sans-serif", margin: "0 0 4px" },
+  shareAmount:  { fontSize: 24, fontWeight: 700, color: "#7c3aed", fontFamily: "sans-serif", margin: "0 0 4px" },
+  shareNote:    { fontSize: 11, color: "#9d6b9d", fontFamily: "sans-serif", margin: 0 },
+  paidBox:      { background: "#d1fae5", borderRadius: 10, padding: "10px 14px", textAlign: "center", marginBottom: 8 },
+  paidText:     { fontSize: 13, color: "#065f46", fontFamily: "sans-serif", margin: 0, fontWeight: 600 },
+  };
