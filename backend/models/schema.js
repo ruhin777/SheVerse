@@ -27,6 +27,7 @@ const TrustedContact = mongoose.model("TrustedContact", trustedContactSchema);
 const SOSAlertSchema = new mongoose.Schema({
   senderId:      { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   senderName:    { type: String, required: true },
+  senderPhone:   { type: String, default: "" }, 
   latitude:      { type: Number, required: true },
   longitude:     { type: Number, required: true },
   message:       { type: String, default: "🚨 I need help! This is an emergency." },
