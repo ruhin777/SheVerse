@@ -27,6 +27,7 @@ const aibotRoutes          = require("./routes/aibotRoutes");
 const postRoutes           = require("./routes/postRoutes");
 const incidentRoutes       = require("./routes/incidentRoutes");
 const paymentRoutes        = require("./routes/paymentRoutes");
+const sosRoutes            = require("./routes/sosRoutes"); // 
 
 const app = express();
 
@@ -166,6 +167,7 @@ app.use("/api/groups", groupRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/messages",    messageRoutes);
 app.use("/api/payment",     paymentRoutes);
+app.use("/api/sos",           sosRoutes); 
 app.get("/", (req, res) => res.send("SheVerse API running"));
 // ── NEW: use httpServer.listen instead of app.listen ──
 httpServer.listen(process.env.PORT, () => {
