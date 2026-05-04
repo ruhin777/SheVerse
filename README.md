@@ -39,7 +39,7 @@ Group 5
 ## **📄 SRS Document**
 
 
-🔗 https://docs.google.com/document/d/1NWimBMlgOF4SG-rD7Su1xMKyQVdOwIC0jlwRvBy5R0o/edit?usp=sharing
+🔗 https://docs.google.com/document/d/1AKLv7aDBs1ZRohJsb4zxvF86eE_FGomI/edit?usp=sharing&ouid=108906287087778194625&rtpof=true&sd=true
 
 
 ---
